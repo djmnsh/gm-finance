@@ -518,6 +518,7 @@ const FB_CONFIG = {
   messagingSenderId: "280013651924",
   appId: "1:280013651924:web:e129d01de6111b1c8c6041"
 };
+const APP_VERSION = "2.1";
 const ALLOWED = ["menash1244@gmail.com", "gal.ayalon2@gmail.com"];
 function showLogin(msg){ $("login").hidden=false; const lg=$("loginLogo"), hb=document.querySelector("header.band img"); if (hb && !lg.src) lg.src=hb.src;
   if (msg!==undefined){ $("loginErr").textContent=msg; $("loginErr").hidden=!msg; } $("loginBtn").disabled=false; }
@@ -799,7 +800,7 @@ function viewOverview(){
   if (S.db) out.push(h("div",{class:"links"},
     h("button",{class:"linkrow",type:"button",onclick:()=>openR("manage")}, h("span",{text:"הוצאות קבועות"}), h("small",{}, N(String(S.recurring.filter(t=>t.active!==false).length)), " הוצאות")),
     h("button",{class:"linkrow",type:"button",onclick:()=>startBudgetEdit(k)}, h("span",{text:"עריכת התקציב החודשי"}), bud ? h("small",{}, N(money(bud.amount,0))) : h("small",{text:"לא הוגדר"})),
-    h("button",{class:"linkrow",type:"button",onclick:signOutNow}, h("span",{text:"יציאה מהחשבון"}), h("small",{text:(S.user&&S.user.email)||""}))));
+    h("button",{class:"linkrow",type:"button",onclick:signOutNow}, h("span",{text:"יציאה מהחשבון"}), h("small",{text:(S.user&&S.user.email)||""}))), h("p",{class:"carried",style:"text-align:center;margin:0",text:"גרסה "+APP_VERSION}));
   return out;
 }
 
