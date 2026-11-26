@@ -228,6 +228,9 @@ details.more .field{background:var(--bg);box-shadow:none}
 .err{color:var(--danger);font-weight:600;margin:0;min-height:1.2em;text-align:center}
 /* While typing, the save bar drops back into the form so it never covers the field above the keyboard */
 #form.typing .savebar{position:static}
+/* The save bar sits flush on the bottom edge; the bar itself carries the home-indicator space */
+#form.panel{padding-bottom:0}
+#form .savebar{padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
 .savebar{position:sticky;bottom:0;z-index:5;display:flex;flex-direction:column;gap:6px;background:var(--sheet);padding-top:6px}
 .bigbtn{border:0;background:var(--btn);color:var(--btn-ink);border-radius:22px;padding:18px;font-weight:800;font-size:1.1rem;width:100%}
 .bigbtn:disabled{opacity:.5}
@@ -535,7 +538,7 @@ const FB_CONFIG = {
   messagingSenderId: "280013651924",
   appId: "1:280013651924:web:e129d01de6111b1c8c6041"
 };
-const APP_VERSION = "2.7";
+const APP_VERSION = "2.8";
 const ALLOWED = ["menash1244@gmail.com", "gal.ayalon2@gmail.com"];
 function showLogin(msg){ $("login").hidden=false; const lg=$("loginLogo"), hb=document.querySelector("header.band img"); if (hb && !lg.src) lg.src=hb.src;
   if (msg!==undefined){ $("loginErr").textContent=msg; $("loginErr").hidden=!msg; } $("loginBtn").disabled=false; }
