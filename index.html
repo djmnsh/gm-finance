@@ -44,7 +44,8 @@
   --danger:#FF7B72; --soft-over:#E9A877; --shadow:0 1px 2px rgb(0 0 0 / .4); color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html,body{background:var(--bg)}
+html{background:linear-gradient(var(--band) 50%,var(--bg) 50%)}
+body{background:var(--bg);margin:0;min-height:100vh;min-height:100dvh}
 body{color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.4;direction:rtl;-webkit-tap-highlight-color:transparent;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   padding-block:0 calc(120px + env(safe-area-inset-bottom,0px))}
@@ -60,7 +61,7 @@ svg.ic{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;str
 .top{display:flex;align-items:center;justify-content:space-between;padding-top:18px;gap:12px}
 .band{background:var(--band);display:flex;justify-content:center;align-items:center;
   margin-left:calc(-1 * max(16px,env(safe-area-inset-left,0px)));margin-right:calc(-1 * max(16px,env(safe-area-inset-right,0px)));
-  margin-top:0;padding-top:env(safe-area-inset-top,0px);height:calc(116px + env(safe-area-inset-top,0px));margin-bottom:18px}
+  margin-top:0;padding-top:calc(14px + env(safe-area-inset-top,0px));height:calc(130px + env(safe-area-inset-top,0px));margin-bottom:18px}
 .band img{height:83px;width:auto;display:block}
 .syncrow{display:flex;justify-content:center;margin-top:-8px}
 .syncrow:has(.sync[hidden]){display:none}
@@ -518,7 +519,7 @@ const FB_CONFIG = {
   messagingSenderId: "280013651924",
   appId: "1:280013651924:web:e129d01de6111b1c8c6041"
 };
-const APP_VERSION = "2.1";
+const APP_VERSION = "2.2";
 const ALLOWED = ["menash1244@gmail.com", "gal.ayalon2@gmail.com"];
 function showLogin(msg){ $("login").hidden=false; const lg=$("loginLogo"), hb=document.querySelector("header.band img"); if (hb && !lg.src) lg.src=hb.src;
   if (msg!==undefined){ $("loginErr").textContent=msg; $("loginErr").hidden=!msg; } $("loginBtn").disabled=false; }
