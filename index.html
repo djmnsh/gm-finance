@@ -255,6 +255,38 @@ details.more .field{background:var(--bg);box-shadow:none}
 .recbar b{font-weight:800}
 .tag{font-size:.72rem;font-weight:700;border-radius:999px;padding:1px 8px;background:var(--p-lav);color:var(--i-lav)}
 .tag.off{background:var(--sunk);color:var(--muted)}
+/* Income */
+.ihero{display:flex;flex-direction:column;gap:2px;padding:16px}
+.ihero small{color:var(--muted)} .ihero b{font-size:2rem;font-weight:900;line-height:1.15}
+.waitcard{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:0;text-align:right;background:var(--p-peach);color:var(--i-peach);border-radius:22px;padding:14px 16px}
+.waitcard b{display:block;font-weight:800} .waitcard small{display:block;opacity:.85;font-size:.8rem;margin-top:2px}
+.waitcard .chev{display:flex} .waitcard .chev .ic{width:20px;height:20px}
+.stag{color:var(--muted);font-weight:600;font-size:.85rem}
+.stag.ok{background:var(--p-mint);color:var(--i-mint);border-radius:999px;padding:2px 10px}
+.stag.gap{background:var(--p-peach);color:var(--i-peach);border-radius:999px;padding:2px 10px}
+.ichips{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ichips button{display:flex;align-items:center;gap:8px;border:2px solid transparent;background:var(--card);border-radius:16px;padding:10px;font-weight:700;text-align:right}
+.ichips button[aria-pressed="true"]{border-color:var(--ink)}
+.ichips .bub{width:28px;height:28px}.ichips .bub .ic{width:16px;height:16px}
+.ichart small.h{color:var(--muted);font-weight:600}
+.ibars{display:flex;align-items:flex-end;gap:5px;height:130px;margin-top:22px}
+.ibc{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;border:0;background:transparent;padding:0;min-width:0}
+.ibv{width:100%;background:#BFE8E5;border-radius:6px 6px 3px 3px;position:relative}
+.ibv.sel{background:var(--band)}
+.ibv em{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);font-style:normal;font-size:.72rem;font-weight:800;white-space:nowrap;color:var(--ink)}
+.ibm{font-size:.62rem;color:var(--faint);margin-top:5px}
+.itrow{padding:7px 0}.itrow > div:first-child{display:flex;justify-content:space-between}
+.ibar{height:9px;border-radius:5px;background:var(--sunk);margin-top:6px;overflow:hidden}.ibar span{display:block;height:100%;border-radius:5px}
+.stbl{background:var(--card);border-radius:20px;padding:4px 12px}
+.stbl .sh,.stbl .sr{display:grid;grid-template-columns:1fr 6.5rem 6.5rem;gap:8px;align-items:center}
+.stbl .sh{color:var(--muted);font-size:.75rem;font-weight:700;padding:8px 0 4px}
+.stbl .sr{border-top:1px solid var(--line);padding:6px 0;font-weight:600}
+.sin{width:100%;min-width:0;border:0;background:var(--bg);border-radius:10px;padding:8px;font-weight:700;direction:ltr;text-align:left}
+.scalc .card div{display:flex;justify-content:space-between;padding:3px 0}
+.scalc .card .tot{border-top:1px solid var(--line);margin-top:6px;padding-top:8px;font-weight:800}
+.sok{background:var(--p-mint);color:var(--i-mint);border-radius:16px;padding:12px 14px;font-weight:700;margin-top:12px}
+.sgap{background:var(--p-peach);color:var(--i-peach);border-radius:16px;padding:12px 14px;font-weight:600;margin-top:12px}
+.shint{color:var(--muted);font-size:.85rem;margin:0}
 .notice{background:var(--p-mint);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:10px}
 .notice h2{font-size:1.05rem;font-weight:800}
 .notice p{margin:0;color:var(--muted)}
@@ -418,6 +450,8 @@ details.more .field{background:var(--bg);box-shadow:none}
     </div>
   </form>
 </div>
+<div class="sheet" id="isheet" hidden><div class="panel" id="ipanel"></div></div>
+<div class="sheet" id="ssheet" hidden><div class="panel" id="spanel"></div></div>
 <div class="sheet" id="rsheet" hidden><div class="panel" id="rpanel"></div></div>
 <div class="sheet psheet" id="psheet" hidden><div class="panel" id="ppanel"></div></div>
 <div class="sheet" id="xsheet" hidden><div class="panel" id="xpanel"></div></div>
@@ -547,7 +581,7 @@ const cyc = e => e.date ? cycleOf(e.date) : (+e.cycle||0);
 
 const S = { db:null, year:null, unsub:null, expenses:[], merchants:{}, merchDocExists:false, loaded:false,
   cycle: cycleOf(todayStr()), sumMode:"month", openCat:null, tab:"expenses", budgets:{}, editBudget:false, budDraft:null,
-  recurring:[], recLoaded:false, gen:null, genLoaded:false, rmode:null, sub:"overview", filter:"all", pastCycle:null, pay:[], q:"", cardMap:{} };
+  recurring:[], recLoaded:false, incomes:[], summaries:{}, isub:"month", icycle:null, ibar:null, sumK:null, sumDraft:null, gen:null, genLoaded:false, rmode:null, sub:"overview", filter:"all", pastCycle:null, pay:[], q:"", cardMap:{} };
 // The app always opens on הוצאות › סקירה
 
 // Only show the connection pill when something needs attention (saving or no connection)
@@ -586,7 +620,7 @@ const FB_CONFIG = {
   messagingSenderId: "280013651924",
   appId: "1:280013651924:web:e129d01de6111b1c8c6041"
 };
-const APP_VERSION = "3.5";
+const APP_VERSION = "3.6";
 const ALLOWED = ["menash1244@gmail.com", "gal.ayalon2@gmail.com"];
 function showLogin(msg){ S.splashReady=true; $("login").hidden=false; const lg=$("loginLogo"), hb=document.querySelector("header.band img"); if (hb && !lg.src) lg.src=hb.src;
   if (msg!==undefined){ $("loginErr").textContent=msg; $("loginErr").hidden=!msg; } $("loginBtn").disabled=false; }
@@ -655,6 +689,8 @@ async function startDb(){
   db.doc("meta/cards").onSnapshot(s => { S.cardMap=(s.exists && s.data().map)||{}; render(); if (S.rmode==="cards") renderR(); }, ()=>{});
   // Apple Pay: the iPhone Shortcut drops each Wallet transaction into inbox/; we turn it into a pending expense
   db.collection("inbox").onSnapshot(s => { s.docs.forEach(d => takeInbox(d.id)); }, ()=>{});
+  db.collection("incomes").onSnapshot(s => { S.incomes=s.docs.map(d=>({...d.data(), id:d.id})); render(); }, ()=>{});
+  db.collection("summaries").onSnapshot(s => { S.summaries=Object.fromEntries(s.docs.map(d=>[Number(d.id), d.data()])); render(); }, ()=>{});
   db.collection("budgets").onSnapshot(s => { S.budLoaded=true; S.budgets=Object.fromEntries(s.docs.map(d=>[Number(d.id), +d.data().amount||0])); if(!S.editBudget) render(); }, ()=>{});
   db.collection("recurring").onSnapshot({includeMetadataChanges:true}, s => { S.recurring=s.docs.map(d=>({...d.data(), id:d.id})).sort((a,b)=>(a.day||0)-(b.day||0)); if(!s.metadata.fromCache){ S.recLoaded=true; ensureGenerated(); } render(); }, ()=>{});
   db.doc(`gen/${cycleOf(todayStr())}`).onSnapshot({includeMetadataChanges:true}, s => { S.gen = s.exists ? s.data() : null; if(!s.metadata.fromCache){ S.genLoaded=true; ensureGenerated(); } render(); }, ()=>{});
@@ -1018,6 +1054,153 @@ function viewAnalysis(){
   return out;
 }
 
+// ---------- Income + monthly summary ----------
+// incomes/<id> {amount, type, name, date, cycle, note}; summaries/<cycleKey> {start:{acct:n}, end:{acct:n}, closed}
+const INC_TYPES = [["salary_menash","משכורת מנש","blue"],["salary_gal","משכורת גל","pink"],["allowance","קצבת ילדים","mint"],["other","מזדמנת","yellow"]];
+const INC = Object.fromEntries(INC_TYPES.map(([id,l,c])=>[id,{label:l,color:c}]));
+const ACCTS = [["personal","בנק אישי"],["shared","בנק משותף"],["bit","ביט מנש"],["cash","מזומן"]];
+const SUBS_INC = [["month","החודש"],["past","חודשים קודמים"],["analysis","ניתוח"]];
+const incOf = k => S.incomes.filter(x=>cyc(x)===k);
+const incTitle = x => x.type==="other" ? (x.name||"הכנסה מזדמנת") : (INC[x.type]||INC.other).label;
+const incBub = t => { const b=h("span",{class:`bub c-${(INC[t]||INC.other).color}`}); b.append(ic("up")); return b; };
+const acctTot = o => ACCTS.reduce((s,[a])=>s+(+((o||{})[a])||0),0);
+const acctFull = o => !!o && ACCTS.every(([a])=>o[a]!==undefined && o[a]!==null && o[a]!=="");
+const monthName = k => cycleInfo(k).label.replace("חודש ","").replace(/ \d{4}$/,"");
+function summaryFor(k){ const d=S.summaries[k]||{}, p=S.summaries[shift(k,-1)];
+  return {start: d.start || (p && p.end) || null, startCarried: !d.start && !!(p && p.end), end: d.end||null, closed: !!d.closed}; }
+function summaryState(k){ const s=summaryFor(k); if (!acctFull(s.start) || !acctFull(s.end)) return null;
+  const inc=sum(incOf(k)), exp=sum(confirmed().filter(e=>cyc(e)===k)), expected=acctTot(s.start)+inc-exp;
+  return {inc, exp, expected, actual:acctTot(s.end), diff:Math.round((acctTot(s.end)-expected)*100)/100}; }
+
+function incSubTabs(){
+  return h("div",{class:"subtabs",role:"tablist"}, ...SUBS_INC.map(([id,label]) =>
+    h("button",{type:"button",role:"tab","aria-selected":String(S.isub===id),onclick:()=>{ S.isub=id; subscribeYear(); render(); window.scrollTo(0,0); }}, label)));
+}
+function incList(k){
+  const rows = incOf(k).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  if (!rows.length) return [h("div",{class:"card"}, h("div",{class:"empty",text:"עוד אין הכנסות בחודש הזה."}))];
+  return [h("div",{class:"card"}, ...rows.map(x => h("button",{class:"row",type:"button",onclick:()=>openIncome(x)}, incBub(x.type),
+    h("span",{class:"t"}, h("b",{text:incTitle(x)}), h("small",{}, x.type==="other"?"מזדמנת · ":"", N(shortDate(x.date)))),
+    h("span",{class:"amt"}, N(money(+x.amount||0))))))];
+}
+function incHero(k, label){ return h("section",{class:"card pad ihero"}, h("small",{text:label}), h("b",{}, N(money(sum(incOf(k)),0)))); }
+function summaryRow(k){
+  const st=summaryState(k), s=summaryFor(k);
+  const tag = st ? (Math.abs(st.diff)<1 ? h("span",{class:"stag ok",text:"התאים ✓"}) : h("span",{class:"stag gap"}, "פער של ", N(money(Math.abs(st.diff),0))))
+    : h("span",{class:"stag",text: s.closed ? "נסגר" : (acctFull(s.start) ? "התחלה נרשמה" : "לא מולא")});
+  return h("div",{class:"links"}, h("button",{class:"linkrow",type:"button",onclick:()=>openSummary(k)}, h("span",{text:"סיכום חודש"}), tag));
+}
+function viewIncMonth(){
+  const k=curCycle(), ci=cycleInfo(k), prev=shift(k,-1), out=[];
+  const prevUsed = incOf(prev).length || S.expenses.some(e=>cyc(e)===prev) || S.summaries[prev];
+  if (S.recLoaded && prevUsed && !summaryFor(prev).closed){
+    const ch=h("span",{class:"chev"}); ch.append(ic("chevL"));
+    out.push(h("button",{class:"waitcard",type:"button",onclick:()=>openSummary(prev)},
+      h("span",{}, h("b",{text:`סיכום ${monthName(prev)} מחכה לך`}), h("small",{text:"היתרות בסוף החודש ובדיקת ההתאמה"})), ch));
+  }
+  out.push(h("div",{class:"monthtitle"}, h("b",{text:ci.label}), h("small",{}, N(ci.range))), incHero(k,"הכנסות החודש"),
+    h("button",{class:"bigbtn addbtn addlg",type:"button",onclick:()=>openIncome(null),disabled:!S.db}, h("span",{class:"plusmark",text:"+"}), "הוספת הכנסה"),
+    ...incList(k), summaryRow(k));
+  return out;
+}
+function viewIncPast(){
+  const max=shift(curCycle(),-1); if (!S.pastCycle || S.pastCycle>max) S.pastCycle=max;
+  return [cycleBar({k:S.pastCycle, set:v=>{S.pastCycle=v;}, max}), incHero(S.pastCycle,"הכנסות בחודש"), summaryRow(S.pastCycle), ...incList(S.pastCycle)];
+}
+function viewIncAnalysis(){
+  if (!S.icycle || S.icycle>curCycle()) S.icycle=curCycle();
+  const Y=labelYear(S.icycle), rows=S.incomes.filter(x=>labelYear(cyc(x))===Y), tot=sum(rows);
+  const mm=Array(12).fill(0); rows.forEach(x=>{ mm[shift(cyc(x),-1)%100-1]+=(+x.amount||0); });
+  const used=mm.map((v,i)=>v?i:-1).filter(i=>i>=0), months=used.length;
+  if (S.ibar==null || !mm[S.ibar]) S.ibar = used.length ? used[used.length-1] : null;
+  const out=[cycleBar({k:S.icycle, set:v=>{S.icycle=Math.min(v,curCycle()); S.ibar=null;}, max:curCycle(), ym:true}),
+    h("section",{class:"card pad ihero"}, h("small",{text:`הכנסות ב-${Y}`}), h("b",{}, N(money(tot,0))), months ? h("small",{}, "ממוצע לחודש ", N(money(tot/months,0))) : null)];
+  if (!rows.length){ out.push(h("div",{class:"card"}, h("div",{class:"empty",text:"אין הכנסות בשנה הזו."}))); return out; }
+  const mx=Math.max(...mm);
+  out.push(h("section",{class:"card pad ichart"}, h("small",{class:"h",text:"לפי חודשים"}),
+    h("div",{class:"ibars"}, ...mm.map((v,i)=>h("button",{type:"button",class:"ibc","aria-label":`${MONTHS[i]}: ${money(v,0)}`,onclick:()=>{ if(v){ S.ibar=i; render(); } }},
+      h("span",{class:"ibv"+(i===S.ibar?" sel":""),style:`height:${v?Math.max(4,v/mx*100):0}%`}, i===S.ibar ? h("em",{}, N(money(v,0))) : null),
+      h("span",{class:"ibm",text:MONTHS[i].slice(0,3)}))))));
+  const bt=INC_TYPES.map(([id,l,c])=>[l,c,sum(rows.filter(x=>(x.type||"other")===id))]).filter(x=>x[2]>0);
+  out.push(h("div",{class:"card pad"}, ...bt.map(([l,c,v])=>h("div",{class:"itrow"}, h("div",{}, h("b",{text:l}), N(money(v,0))),
+    h("div",{class:"ibar"}, h("span",{style:`width:${(v/tot*100).toFixed(1)}%;background:var(--i-${c})`}))))));
+  return out;
+}
+
+// Income form (its own small sheet)
+let IF=null;
+function openIncome(x){
+  IF = x ? {...x} : {type:"salary_menash", date:todayStr()};
+  const p=$("ipanel");
+  const amt=h("input",{id:"iAmount",inputmode:"decimal",autocomplete:"off",placeholder:"0","aria-label":"סכום",value:x?String(x.amount):""});
+  const name=h("input",{id:"iName",class:"field",autocomplete:"off",placeholder:"למשל: מכירת עגלה, מתנה",value:IF.name||""});
+  const nameRow=h("div",{hidden:IF.type!=="other"}, h("label",{class:"lbl2",for:"iName",text:"מה זה היה?"}), name);
+  const chips=h("div",{class:"ichips"});
+  const drawChips=()=>chips.replaceChildren(...INC_TYPES.map(([id,l])=>h("button",{type:"button","aria-pressed":String(IF.type===id),onclick:()=>{IF.type=id; nameRow.hidden=id!=="other"; drawChips();}}, incBub(id), l)));
+  drawChips();
+  const date=h("input",{type:"date",id:"iDate",class:"field",value:IF.date||""});
+  const note=h("textarea",{id:"iNote",class:"field",placeholder:"למשל: כולל בונוס"}); note.value=IF.note||"";
+  const err=h("p",{class:"err",role:"alert"});
+  const save=async()=>{
+    const a=parseFloat((amt.value||"").replace(/[,₪\s]/g,""));
+    if (!(a>0)){ err.textContent="כמה נכנס? הזינו סכום."; amt.focus(); return; }
+    if (!date.value){ err.textContent="מתי זה נכנס? בחרו תאריך."; return; }
+    if (IF.type==="other" && !name.value.trim()){ err.textContent="כתבו בקצרה מה זו ההכנסה."; name.focus(); return; }
+    const body={amount:Math.round(a*100)/100, type:IF.type, name:IF.type==="other"?name.value.trim():"", date:date.value, cycle:cycleOf(date.value), note:note.value.trim(),
+      createdAt:IF.createdAt||Date.now(), updatedAt:Date.now()};
+    try{ const ref = IF.id ? S.db.doc(`incomes/${IF.id}`) : S.db.collection("incomes").doc(); await ref.set(body); closeIncome(); toast(IF&&IF.id?"השינויים נשמרו":"ההכנסה נוספה"); }
+    catch{ err.textContent="השמירה נכשלה. נסו שוב."; }
+  };
+  const x0=h("button",{type:"button",class:"x","aria-label":"סגירה",onclick:closeIncome}); x0.innerHTML='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+  const del = x ? h("button",{type:"button",class:"textbtn",style:"color:var(--danger)",onclick:async()=>{ try{ await S.db.doc(`incomes/${x.id}`).delete(); closeIncome(); toast("ההכנסה נמחקה"); }catch{ err.textContent="המחיקה נכשלה. נסו שוב."; } }},"מחיקת ההכנסה") : null;
+  p.replaceChildren(h("header",{}, h("span",{class:"eyebrow",text:x?"עריכת הכנסה":"הכנסה חדשה"}), x0),
+    h("label",{class:"amtbox",for:"iAmount"}, h("span",{text:"₪"}), amt),
+    h("div",{}, h("span",{class:"lbl2",text:"איזו הכנסה?"}), chips), nameRow,
+    h("div",{}, h("label",{class:"lbl2",for:"iDate",text:"מתי?"}), date),
+    h("div",{}, h("label",{class:"lbl2",for:"iNote",text:"הערה (לא חובה)"}), note),
+    h("div",{class:"savebar"}, err, h("button",{type:"button",class:"bigbtn",onclick:save}, x?"שמירת שינויים":"הוספת הכנסה"), del));
+  $("isheet").hidden=false; if (!x) setTimeout(()=>amt.focus(),60);
+}
+function closeIncome(){ $("isheet").hidden=true; IF=null; }
+
+// Monthly summary sheet: balances at the start and end, and the check start + income − expenses = end
+function openSummary(k){ S.sumK=k; if (k<curCycle()){ S.pastCycle=k; subscribeYear(); } S.sumDraft=null; renderSummary(); $("ssheet").hidden=false; }
+function closeSummary(){ $("ssheet").hidden=true; S.sumK=null; S.sumDraft=null; }
+function renderSummary(){
+  const k=S.sumK; if (k==null) return;
+  const base=summaryFor(k);
+  if (!S.sumDraft) S.sumDraft={start:{...(base.start||{})}, end:{...(base.end||{})}};
+  const D=S.sumDraft, num=v=>{ const n=parseFloat(String(v??"").replace(/[,₪\s]/g,"")); return isNaN(n)?"":n; };
+  const cell=(side,a)=>h("input",{class:"sin",inputmode:"decimal",autocomplete:"off",placeholder:"–",value:D[side][a]??"","aria-label":`${side==="start"?"בתחילת החודש":"בסוף החודש"} ${a}`,
+    oninput:e=>{ D[side][a]=num(e.target.value); drawCalc(); }});
+  const tbl=h("div",{class:"stbl"}, h("div",{class:"sh"}, h("span"), h("span",{text:"בתחילת החודש"}), h("span",{text:"בסוף החודש"})),
+    ...ACCTS.map(([a,l])=>h("div",{class:"sr"}, h("span",{text:l}), cell("start",a), cell("end",a))));
+  const calc=h("div",{class:"scalc"});
+  const drawCalc=()=>{
+    const inc=sum(incOf(k)), exp=sum(confirmed().filter(e=>cyc(e)===k)), full=acctFull(D.start)&&acctFull(D.end);
+    const st=acctTot(D.start), en=acctTot(D.end), expd=st+inc-exp, diff=Math.round((en-expd)*100)/100;
+    const line=(l,v,cls="")=>h("div",{class:cls}, h("span",{text:l}), h("b",{}, N(money(v,0))));
+    calc.replaceChildren(h("div",{class:"card pad"}, line("יתרה בתחילת החודש",st), line("+ הכנסות החודש",inc), line("− הוצאות החודש (כולל זיכויים)",exp), line("אמור להיות בסוף החודש",expd,"tot"), line("יש בפועל",en)),
+      !full ? h("p",{class:"shint",text:"ממלאים את כל היתרות כדי לראות אם הכל מתאים."})
+      : Math.abs(diff)<1 ? h("div",{class:"sok",text:"הכל מתאים ✓"})
+      : h("div",{class:"sgap"}, diff<0 ? ["חסרים ", N(money(-diff,0)), " לעומת מה שאמור להיות. אולי הוצאה שלא נרשמה?"] : ["יש ", N(money(diff,0)), " יותר ממה שאמור להיות. אולי הכנסה שלא נרשמה, או הוצאה שנרשמה פעמיים?"]));
+  };
+  drawCalc();
+  const err=h("p",{class:"err",role:"alert"});
+  const save=async close=>{
+    if (close && !(acctFull(D.start)&&acctFull(D.end))){ err.textContent="כדי לסגור את החודש ממלאים את כל היתרות."; return; }
+    try{ await S.db.doc(`summaries/${k}`).set({start:D.start, end:D.end, closed: close ? true : !!(S.summaries[k]||{}).closed, updatedAt:Date.now()}, {merge:true});
+      closeSummary(); toast(close?"החודש נסגר":"נשמר"); render(); }catch{ err.textContent="השמירה נכשלה. נסו שוב."; }
+  };
+  const x0=h("button",{type:"button",class:"x","aria-label":"סגירה",onclick:closeSummary}); x0.innerHTML='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+  $("spanel").replaceChildren(...[ h("header",{}, h("span",{class:"eyebrow",text:`סיכום ${monthName(k)}`}), x0),
+    base.startCarried ? h("p",{class:"shint",text:"יתרות ההתחלה הגיעו מסוף החודש הקודם."}) : null,
+    tbl, calc,
+    h("p",{class:"shint",text:"היתרות בסוף החודש יהיו אוטומטית יתרות ההתחלה של החודש הבא."}),
+    h("div",{class:"savebar"}, err, h("button",{type:"button",class:"bigbtn",onclick:()=>save(true)}, base.closed?"שמירה":"סגירת החודש"),
+      base.closed ? null : h("button",{type:"button",class:"textbtn",onclick:()=>save(false)},"שמירה בלי לסגור")) ].filter(Boolean));
+}
+
 function viewSoon(title, icon, color, line){
   const b=h("span",{class:`bub c-${color}`}); b.append(ic(icon));
   return [h("h1",{class:"pagetitle",text:title}), h("div",{class:"soon"}, b, h("h2",{text:"יושלם בהמשך"}), h("p",{text:line}))];
@@ -1026,7 +1209,7 @@ function viewSoon(title, icon, color, line){
 function render(){
   document.querySelectorAll(".nav .tb").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab===S.tab)));
   const v = S.tab==="expenses" ? [subTabs(), ...(S.sub==="month" ? viewMonth() : S.sub==="past" ? viewPast() : S.sub==="analysis" ? viewAnalysis() : viewOverview())]
-    : S.tab==="income" ? viewSoon("הכנסות","up","mint","כאן תעקבו אחרי המשכורות וההכנסות של המשפחה.")
+    : S.tab==="income" ? [incSubTabs(), ...(S.isub==="past" ? viewIncPast() : S.isub==="analysis" ? viewIncAnalysis() : viewIncMonth())]
     : viewSoon("חסכונות","piggy","pink","כאן תעקבו אחרי החסכונות והיעדים שלכם.");
   $("view").replaceChildren(...v);
   const ms=new Set(), cs=new Set(); S.expenses.forEach(e=>{ if(e.merchant) ms.add(e.merchant); if(e.card) cs.add(e.card); });
@@ -1116,6 +1299,8 @@ function openPay(){
     ...(cur ? [h("button",{type:"button",class:"textbtn",onclick:()=>pick("")},"ללא אמצעי תשלום")] : []));
   $("psheet").hidden=false; }
 $("fPayBtn").addEventListener("click", openPay);
+$("isheet").addEventListener("click", ev => { if (ev.target.id==="isheet") closeIncome(); });
+$("ssheet").addEventListener("click", ev => { if (ev.target.id==="ssheet") closeSummary(); });
 $("psheet").addEventListener("click", ev => { if (ev.target.id==="psheet") $("psheet").hidden=true; });
 function setDate(v){ $("fDate").value=v; if(v) $("fDateBox").removeAttribute("data-empty"); else $("fDateBox").setAttribute("data-empty",""); }
 $("fToday").addEventListener("click", ()=>setDate(todayStr()));
