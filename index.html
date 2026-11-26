@@ -226,6 +226,8 @@ details.more[open] summary::after{content:"−"}
 details.more .in{padding:0 14px 14px;display:flex;flex-direction:column;gap:12px}
 details.more .field{background:var(--bg);box-shadow:none}
 .err{color:var(--danger);font-weight:600;margin:0;min-height:1.2em;text-align:center}
+/* While typing, the save bar drops back into the form so it never covers the field above the keyboard */
+#form.typing .savebar{position:static}
 .savebar{position:sticky;bottom:0;z-index:5;display:flex;flex-direction:column;gap:6px;background:var(--sheet);padding-top:6px}
 .bigbtn{border:0;background:var(--btn);color:var(--btn-ink);border-radius:22px;padding:18px;font-weight:800;font-size:1.1rem;width:100%}
 .bigbtn:disabled{opacity:.5}
@@ -533,7 +535,7 @@ const FB_CONFIG = {
   messagingSenderId: "280013651924",
   appId: "1:280013651924:web:e129d01de6111b1c8c6041"
 };
-const APP_VERSION = "2.6";
+const APP_VERSION = "2.7";
 const ALLOWED = ["menash1244@gmail.com", "gal.ayalon2@gmail.com"];
 function showLogin(msg){ $("login").hidden=false; const lg=$("loginLogo"), hb=document.querySelector("header.band img"); if (hb && !lg.src) lg.src=hb.src;
   if (msg!==undefined){ $("loginErr").textContent=msg; $("loginErr").hidden=!msg; } $("loginBtn").disabled=false; }
@@ -1085,6 +1087,10 @@ $("closeSheet").addEventListener("click", closeForm);
 $("sheet").addEventListener("click", ev => { if (ev.target.id==="sheet") closeForm(); });
 document.addEventListener("keydown", ev => { if (ev.key==="Escape" && F) closeForm(); });
 
+const isTyping = el => el && (el.tagName==="TEXTAREA" || (el.tagName==="INPUT" && !["button","checkbox","radio","file","hidden"].includes(el.type)));
+$("form").addEventListener("focusin", ev => { if (!isTyping(ev.target)) return; $("form").classList.add("typing");
+  setTimeout(()=>{ try{ ev.target.scrollIntoView({block:"center", behavior:"smooth"}); }catch{} }, 300); });
+$("form").addEventListener("focusout", () => { setTimeout(()=>{ if (!isTyping(document.activeElement)) $("form").classList.remove("typing"); }, 50); });
 $("form").addEventListener("submit", async ev => {
   ev.preventDefault(); if (!F || !S.db) return;
   const amount = parseFloat(($("fAmount").value||"").replace(/[,₪\s]/g,""));
