@@ -558,7 +558,7 @@ const FB_CONFIG = {
   messagingSenderId: "280013651924",
   appId: "1:280013651924:web:e129d01de6111b1c8c6041"
 };
-const APP_VERSION = "3.2";
+const APP_VERSION = "3.3";
 const ALLOWED = ["menash1244@gmail.com", "gal.ayalon2@gmail.com"];
 function showLogin(msg){ S.splashReady=true; $("login").hidden=false; const lg=$("loginLogo"), hb=document.querySelector("header.band img"); if (hb && !lg.src) lg.src=hb.src;
   if (msg!==undefined){ $("loginErr").textContent=msg; $("loginErr").hidden=!msg; } $("loginBtn").disabled=false; }
@@ -874,7 +874,7 @@ function viewOverview(){
   const tile = (icon,color,val,cap,onclick) => { const b=h("span",{class:`bub c-${color}`}); b.append(ic(icon));
     return h(onclick?"button":"div",{class:"tile"+(onclick?" tap":""),type:onclick?"button":null,onclick}, b, h("div",{}, h("div",{class:"val"}, val), h("div",{class:"cap",text:cap}))); };
   const who = (S.user && (S.user.email||"").toLowerCase()==="gal.ayalon2@gmail.com") ? "גל" : "מנש";
-  const out = [ h("h1",{class:"greet",text:`היי ${who} 👋`}),
+  const out = [ h("h1",{class:"greet",text:`היי ${who} 👋🏼`}),
     h("div",{class:"monthtitle"}, h("b",{text:ci.label}), h("small",{}, N(ci.range))),
     h("div",{class:"tiles"},
       tile("clock","mint", dLeft>0 ? `${dLeft} ימים` : "יום אחרון", `החודש נגמר ב-9.${k%100}`),
