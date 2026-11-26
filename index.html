@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="https://djmnsh.github.io/gm-finance/icons/apple-touch-icon.png?v=2">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800;900&family=Varela+Round&display=swap">
 <style>
 /* Layout: iPhone-first single column; huge total up top, white cards with soft shadows, 2x2 stat tiles,
    floating bottom bar with a round green "+" in the middle, cream bottom sheet for entry */
@@ -94,8 +94,21 @@ svg.ic{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;str
 .leftrow{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .leftrow .mid{font-weight:700;font-size:1.05rem;color:var(--ink)}
 .leftrow .mid.over{color:var(--soft-over)}
-.addbtn.addlg{font-size:1.25rem;padding:20px;border-radius:22px}
-.addbtn.addlg .plusmark{font-size:1.8rem}
+/* Glossy bubble "add" button on סקירה; glints stay at the edges, never over the label */
+.addbtn.addlg{position:relative;isolation:isolate;overflow:hidden;min-height:84px;padding:14px 24px;border-radius:999px;gap:14px;
+  background:linear-gradient(#5fd17a,#1f8c4e);border:5px solid #17703c;color:#fff;font-family:"Varela Round",var(--font);font-weight:400;font-size:30px;line-height:1;
+  -webkit-text-stroke:1.2px #fff;text-shadow:0 3px 0 #17703c;box-shadow:0 7px 0 #0f5a2e,0 12px 20px rgba(0,0,0,.25),inset 0 4px 0 rgba(255,255,255,.35);
+  transition:transform .08s ease,box-shadow .08s ease;margin-bottom:7px}
+.addbtn.addlg::before,.addbtn.addlg::after{content:"";position:absolute;z-index:-1;background:#fff;border-radius:999px;pointer-events:none}
+.addbtn.addlg::before{top:9px;right:22px;width:30px;height:9px;opacity:.85;transform:rotate(-8deg)}
+.addbtn.addlg::after{bottom:10px;left:24px;width:12px;height:7px;opacity:.6;transform:rotate(-8deg)}
+.addbtn.addlg:active{transform:translateY(5px);box-shadow:0 2px 0 #0f5a2e,0 5px 10px rgba(0,0,0,.2),inset 0 4px 0 rgba(255,255,255,.35)}
+.addbtn.addlg .plusmark{position:relative;width:42px;height:42px;flex:none;border-radius:50%;background:#fff;box-shadow:0 3px 0 #17703c;
+  font-size:0;color:transparent;text-shadow:none;-webkit-text-stroke:0}
+.addbtn.addlg .plusmark::before,.addbtn.addlg .plusmark::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#1f8c4e;border-radius:3px}
+.addbtn.addlg .plusmark::before{width:22px;height:6px}
+.addbtn.addlg .plusmark::after{width:6px;height:22px}
+.addbtn.addlg:disabled{opacity:.6}
 .meter{height:12px;background:var(--sunk);border-radius:999px;overflow:hidden;margin-top:12px}
 .meter span{display:block;height:100%;border-radius:999px;background:var(--green)}
 .meter span.warn{background:var(--i-yellow)} .meter span.over{background:var(--soft-over)}
@@ -523,7 +536,7 @@ const FB_CONFIG = {
   messagingSenderId: "280013651924",
   appId: "1:280013651924:web:e129d01de6111b1c8c6041"
 };
-const APP_VERSION = "2.3";
+const APP_VERSION = "2.4";
 const ALLOWED = ["menash1244@gmail.com", "gal.ayalon2@gmail.com"];
 function showLogin(msg){ $("login").hidden=false; const lg=$("loginLogo"), hb=document.querySelector("header.band img"); if (hb && !lg.src) lg.src=hb.src;
   if (msg!==undefined){ $("loginErr").textContent=msg; $("loginErr").hidden=!msg; } $("loginBtn").disabled=false; }
