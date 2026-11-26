@@ -189,6 +189,15 @@ svg.ic{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;str
 .eyebrow{color:var(--muted);font-weight:600;font-size:.9rem}
 .x{width:40px;height:40px;border:0;background:transparent;display:grid;place-items:center}
 .x svg{width:22px;height:22px;stroke:var(--ink);stroke-width:2.6;stroke-linecap:round}
+/* Expense / credit toggle: small and quiet; a credit turns the amount soft green */
+.kindseg{display:inline-flex;align-self:flex-start;background:var(--sunk);border-radius:999px;padding:3px;gap:2px}
+.kindseg button{border:0;background:transparent;border-radius:999px;padding:5px 14px;font-size:.85rem;font-weight:700;color:var(--muted)}
+.kindseg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgb(0 0 0 / .08)}
+.kindseg button[data-k="1"][aria-pressed="true"]{color:var(--i-mint)}
+#form.credit .amtbox span,#form.credit .amtbox input{color:#2E9E5E}
+#form.credit .amtbox span::before{content:"−";margin-inline-end:2px}
+.amt.cr{color:#2E9E5E}
+.crtag{display:inline-block;font-size:.7rem;font-weight:700;color:var(--i-mint);background:var(--p-mint);border-radius:999px;padding:1px 7px;margin-inline-start:6px;vertical-align:2px}
 .amtbox{display:flex;align-items:center;justify-content:center;gap:4px;direction:ltr}
 .amtbox span{font-weight:900;font-size:2.6rem;color:var(--faint)}
 .amtbox input{width:6.5ch;min-width:0;border:0;background:transparent;font-weight:900;font-size:3.2rem;text-align:left;outline:none;letter-spacing:-.02em;padding:0}
@@ -381,6 +390,7 @@ details.more .field{background:var(--bg);box-shadow:none}
 <div class="sheet" id="sheet" hidden>
   <form class="panel" id="form" novalidate>
     <header><span class="eyebrow" id="formTitle">הוצאה חדשה</span><button type="button" class="x" id="closeSheet" aria-label="סגירה"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+    <div class="kindseg" id="fKind" role="group" aria-label="סוג"><button type="button" data-k="0" aria-pressed="true">הוצאה</button><button type="button" data-k="1" aria-pressed="false">זיכוי</button></div>
     <label class="amtbox" for="fAmount"><span>₪</span><input id="fAmount" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="סכום"></label>
     <div id="fNameRow"><label class="lbl2" for="fName" id="fNameLbl">שם ההוצאה</label><input id="fName" class="field" list="dlNames" autocomplete="off" placeholder="למשל: קניות בשופרסל, מתנה לדנה"></div>
     <div><span class="lbl2">של מי ההוצאה?</span><div class="seg3" id="fOwners">
@@ -500,7 +510,7 @@ const OWNERS = {shared:"משותף",gal:"גל",menash:"מנש"};
 const OWNER_VAR = {shared:"var(--shared)",gal:"var(--gal)",menash:"var(--menash)"};
 const MONTHS = ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
 const DAYS = ["א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ש׳"];
-const money = (n, dec=2) => "₪" + (Math.round(n*100)/100).toLocaleString("en-US",{maximumFractionDigits:dec});
+const money = (n, dec=2) => (n<0?"−":"") + "₪" + (Math.round(Math.abs(n)*100)/100).toLocaleString("en-US",{maximumFractionDigits:dec});
 const pad = n => String(n).padStart(2,"0");
 const $ = id => document.getElementById(id);
 const norm = s => (s||"").trim().toLowerCase().replace(/\s+/g," ");
@@ -576,7 +586,7 @@ const FB_CONFIG = {
   messagingSenderId: "280013651924",
   appId: "1:280013651924:web:e129d01de6111b1c8c6041"
 };
-const APP_VERSION = "3.4";
+const APP_VERSION = "3.5";
 const ALLOWED = ["menash1244@gmail.com", "gal.ayalon2@gmail.com"];
 function showLogin(msg){ S.splashReady=true; $("login").hidden=false; const lg=$("loginLogo"), hb=document.querySelector("header.band img"); if (hb && !lg.src) lg.src=hb.src;
   if (msg!==undefined){ $("loginErr").textContent=msg; $("loginErr").hidden=!msg; } $("loginBtn").disabled=false; }
@@ -949,9 +959,9 @@ function expenseList(k){
     const title = e.name || (rec?e.recName:"") || e.merchant || e.sub || e.cat || "הוצאה";
     const label = rec ? ` · ${e.sub||e.cat}${e.charged?" · חויבה":""}` : (e.sub && title!==e.sub ? ` · ${e.sub}` : (e.sub && e.sub!==e.cat ? ` · ${e.cat}` : ""));
     return h("button",{class:"row",type:"button",onclick:()=>openForm(e)}, bubble(e.cat),
-      h("span",{class:"t"}, h("b",{text:title}),
+      h("span",{class:"t"}, h("b",{}, title, +e.amount<0 ? h("span",{class:"crtag",text:"זיכוי"}) : null),
         h("small",{}, h("i",{style:`background:${OWNER_VAR[o]}`}), OWNERS[o], label, e.date ? h("span",{class:"rdate"}, " · ", N(shortDate(e.date))) : null)),
-      h("span",{class:"amt"}, N(money(+e.amount||0)))); };
+      h("span",{class:"amt"+(+e.amount<0?" cr":"")}, N(money(+e.amount||0)))); };
   const rec = rows.filter(e=>e.recurring), oth = rows.filter(e=>!e.recurring);
   if (oth.length) out.push(h("div",{class:"card"}, ...oth.map(e=>rowBtn(e,false))));
   if (rec.length) out.push(h("div",{class:"card"},
@@ -1038,7 +1048,8 @@ function openForm(e, fromPending){
   if (fromPending && !F.card && F.walletCard && S.cardMap[F.walletCard]) F.card=S.cardMap[F.walletCard];
   $("formTitle").textContent = fromPending ? "אישור עסקה" : (e ? "עריכת הוצאה" : "הוצאה חדשה");
   $("fSave").textContent = fromPending ? "אישור ושמירה" : (e ? "שמירת שינויים" : "הוספת הוצאה");
-  $("fAmount").value = e && e.amount!=null ? String(e.amount) : "";
+  $("fAmount").value = e && e.amount!=null ? String(Math.abs(+e.amount)) : "";
+  setCredit(!!(e && +e.amount<0));
   setDate(e ? (F.date||"") : "");
   $("fName").value = F.name || F.recName || (fromPending ? F.merchant||"" : "");
   $("fMerchant").value=F.merchant||""; setPay(F.card||""); $("fNote").value=F.note||"";
@@ -1051,7 +1062,12 @@ function openForm(e, fromPending){
   $("sheet").hidden=false;
   if (!e) setTimeout(()=>$("fAmount").focus(),60);
 }
+function setCredit(on){ if (F) F.credit=!!on; $("form").classList.toggle("credit", !!on);
+  $("fKind").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", String((b.dataset.k==="1")===!!on)));
+  if (F && F.kind!=="template") $("fSave").textContent = F.fromPending ? "אישור ושמירה" : (F.id ? "שמירת שינויים" : (on ? "הוספת זיכוי" : "הוספת הוצאה")); }
+$("fKind").addEventListener("click", ev => { const b=ev.target.closest("button[data-k]"); if (b) setCredit(b.dataset.k==="1"); });
 function setMode(tpl){
+  $("fKind").hidden=tpl;
   $("fNameLbl").textContent = tpl ? "שם ההוצאה הקבועה" : "שם ההוצאה";
   $("fName").placeholder = tpl ? "למשל: נטפליקס, ארנונה, חיסכון לילדים" : "למשל: קניות בשופרסל, מתנה לדנה";
   $("fDayRow").hidden=!tpl; $("fDateRow").hidden=tpl; $("fScope").replaceChildren();
@@ -1066,6 +1082,7 @@ function openTemplate(t){
   $("fSave").textContent = t ? "שמירת שינויים" : "הוספת הוצאה קבועה";
   $("fName").value=F.name||""; $("fDay").value=String(F.day||1);
   $("fAmount").value = t && t.amount!=null ? String(t.amount) : "";
+  setCredit(false);
   $("fMerchant").value=F.merchant||""; setPay(F.card||""); $("fNote").value=F.note||"";
   $("fExtra").open = !!(F.merchant||F.card||F.note);
   $("fErr").textContent="";
@@ -1180,8 +1197,8 @@ $("form").addEventListener("submit", async ev => {
         h("button",{type:"button",class:"pill-btn",onclick:()=>{F.scope="future"; $("form").requestSubmit();}},"מעכשיו והלאה"))));
     $("fSave").hidden=true; return;
   }
-  const {id, year, fromPending, showAll, picked, suggest:_s, openMain, confirmDel, kind, scope, ...rest} = F;
-  const body = {...rest, name, amount:Math.round(amount*100)/100, date, cycle, cat:c.cat, sub:c.sub, owner:F.owner||"shared",
+  const {id, year, fromPending, showAll, picked, suggest:_s, openMain, confirmDel, kind, scope, credit, ...rest} = F;
+  const body = {...rest, name, amount:(credit?-1:1)*Math.round(amount*100)/100, date, cycle, cat:c.cat, sub:c.sub, owner:F.owner||"shared",
     merchant:$("fMerchant").value.trim(), card:$("fCard").value.trim(), note:$("fNote").value.trim(),
     status:"confirmed", createdAt:F.createdAt||Date.now(), updatedAt:Date.now()};
   const ny = Math.floor(cycle/100);
