@@ -326,6 +326,7 @@ details.more .field{background:var(--bg);box-shadow:none}
 .splash img{width:min(72vw,320px);height:auto;transform:translateY(calc(50vh + 100%));animation:rise 1s cubic-bezier(.2,.9,.3,1.1) .1s forwards}
 @keyframes rise{to{transform:translateY(0)}}
 @media (prefers-reduced-motion:reduce){.splash img{animation:none;transform:none}}
+.greet{font-size:2rem;font-weight:800;line-height:1.15;margin:4px 0 14px}
 .login{position:fixed;inset:0;z-index:60;background:var(--band);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
   padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;color:#fff}
 .login img{width:min(78vw,340px);height:auto}
@@ -557,7 +558,7 @@ const FB_CONFIG = {
   messagingSenderId: "280013651924",
   appId: "1:280013651924:web:e129d01de6111b1c8c6041"
 };
-const APP_VERSION = "3.1";
+const APP_VERSION = "3.2";
 const ALLOWED = ["menash1244@gmail.com", "gal.ayalon2@gmail.com"];
 function showLogin(msg){ S.splashReady=true; $("login").hidden=false; const lg=$("loginLogo"), hb=document.querySelector("header.band img"); if (hb && !lg.src) lg.src=hb.src;
   if (msg!==undefined){ $("loginErr").textContent=msg; $("loginErr").hidden=!msg; } $("loginBtn").disabled=false; }
@@ -872,7 +873,9 @@ function viewOverview(){
   const ci = cycleInfo(k);
   const tile = (icon,color,val,cap,onclick) => { const b=h("span",{class:`bub c-${color}`}); b.append(ic(icon));
     return h(onclick?"button":"div",{class:"tile"+(onclick?" tap":""),type:onclick?"button":null,onclick}, b, h("div",{}, h("div",{class:"val"}, val), h("div",{class:"cap",text:cap}))); };
-  const out = [ h("div",{class:"monthtitle"}, h("b",{text:ci.label}), h("small",{}, N(ci.range))),
+  const who = (S.user && (S.user.email||"").toLowerCase()==="gal.ayalon2@gmail.com") ? "גל" : "מנש";
+  const out = [ h("h1",{class:"greet",text:`היי ${who} 👋`}),
+    h("div",{class:"monthtitle"}, h("b",{text:ci.label}), h("small",{}, N(ci.range))),
     h("div",{class:"tiles"},
       tile("clock","mint", dLeft>0 ? `${dLeft} ימים` : "יום אחרון", `החודש נגמר ב-9.${k%100}`),
       tile("receipt", pend.length?"peach":"blue", N(String(pend.length)), pend.length ? "ממתינות לאישור" : "אין עסקאות לאישור", pend.length ? ()=>{ S.sub="month"; render(); window.scrollTo(0,0); } : null)),
