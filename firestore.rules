@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Only Menash and Gal, signed in with a verified Google account, can read or write anything.
+    match /{document=**} {
+      allow read, write: if request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['menash1244@gmail.com', 'gal.ayalon2@gmail.com'];
+    }
+  }
+}
