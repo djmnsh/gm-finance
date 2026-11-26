@@ -256,6 +256,8 @@ details.more .field{background:var(--bg);box-shadow:none}
 .tag{font-size:.72rem;font-weight:700;border-radius:999px;padding:1px 8px;background:var(--p-lav);color:var(--i-lav)}
 .tag.off{background:var(--sunk);color:var(--muted)}
 /* Income */
+.wdrow{color:var(--muted)} .wdrow .t b{color:var(--muted);font-weight:600} .wdrow .amt{color:var(--muted);font-weight:600}
+.bub.c-gray{background:var(--sunk);color:var(--muted)} .ihero .wdnote{font-size:.85rem}
 .ihero{display:flex;flex-direction:column;gap:2px;padding:16px}
 .ihero small{color:var(--muted)} .ihero b{font-size:2rem;font-weight:900;line-height:1.15}
 .waitcard{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:0;text-align:right;background:var(--p-peach);color:var(--i-peach);border-radius:22px;padding:14px 16px}
@@ -283,6 +285,7 @@ details.more .field{background:var(--bg);box-shadow:none}
 .stbl .sr{border-top:1px solid var(--line);padding:6px 0;font-weight:600}
 .sin{width:100%;min-width:0;border:0;background:var(--bg);border-radius:10px;padding:8px;font-weight:700;direction:ltr;text-align:left}
 .scalc .card div{display:flex;justify-content:space-between;padding:3px 0}
+.scalc .card .wdl{color:var(--muted)}
 .scalc .card .tot{border-top:1px solid var(--line);margin-top:6px;padding-top:8px;font-weight:800}
 .sok{background:var(--p-mint);color:var(--i-mint);border-radius:16px;padding:12px 14px;font-weight:700;margin-top:12px}
 .sgap{background:var(--p-peach);color:var(--i-peach);border-radius:16px;padding:12px 14px;font-weight:600;margin-top:12px}
@@ -620,7 +623,7 @@ const FB_CONFIG = {
   messagingSenderId: "280013651924",
   appId: "1:280013651924:web:e129d01de6111b1c8c6041"
 };
-const APP_VERSION = "3.6";
+const APP_VERSION = "3.7";
 const ALLOWED = ["menash1244@gmail.com", "gal.ayalon2@gmail.com"];
 function showLogin(msg){ S.splashReady=true; $("login").hidden=false; const lg=$("loginLogo"), hb=document.querySelector("header.band img"); if (hb && !lg.src) lg.src=hb.src;
   if (msg!==undefined){ $("loginErr").textContent=msg; $("loginErr").hidden=!msg; } $("loginBtn").disabled=false; }
@@ -1057,33 +1060,37 @@ function viewAnalysis(){
 // ---------- Income + monthly summary ----------
 // incomes/<id> {amount, type, name, date, cycle, note}; summaries/<cycleKey> {start:{acct:n}, end:{acct:n}, closed}
 const INC_TYPES = [["salary_menash","משכורת מנש","blue"],["salary_gal","משכורת גל","pink"],["allowance","קצבת ילדים","mint"],["other","מזדמנת","yellow"]];
+const WD_TYPES = [["wd_saving","מחיסכון"],["wd_loan","הלוואה"]];
 const INC = Object.fromEntries(INC_TYPES.map(([id,l,c])=>[id,{label:l,color:c}]));
+const isWd = x => String(x.type||"").startsWith("wd_");
 const ACCTS = [["personal","בנק אישי"],["shared","בנק משותף"],["bit","ביט מנש"],["cash","מזומן"]];
 const SUBS_INC = [["month","החודש"],["past","חודשים קודמים"],["analysis","ניתוח"]];
-const incOf = k => S.incomes.filter(x=>cyc(x)===k);
-const incTitle = x => x.type==="other" ? (x.name||"הכנסה מזדמנת") : (INC[x.type]||INC.other).label;
-const incBub = t => { const b=h("span",{class:`bub c-${(INC[t]||INC.other).color}`}); b.append(ic("up")); return b; };
+const allIncOf = k => S.incomes.filter(x=>cyc(x)===k);
+const incOf = k => allIncOf(k).filter(x=>!isWd(x));
+const wdOf = k => allIncOf(k).filter(isWd);
+const incTitle = x => isWd(x) ? (x.type==="wd_loan" ? (x.name?"הלוואה מ"+x.name:"הלוואה") : (x.name?"משיכה מ"+x.name:"משיכה מחיסכון")) : x.type==="other" ? (x.name||"הכנסה מזדמנת") : (INC[x.type]||INC.other).label;
+const incBub = t => { const b=h("span",{class:`bub c-${String(t||"").startsWith("wd_")?"gray":(INC[t]||INC.other).color}`}); b.append(ic("up")); return b; };
 const acctTot = o => ACCTS.reduce((s,[a])=>s+(+((o||{})[a])||0),0);
 const acctFull = o => !!o && ACCTS.every(([a])=>o[a]!==undefined && o[a]!==null && o[a]!=="");
 const monthName = k => cycleInfo(k).label.replace("חודש ","").replace(/ \d{4}$/,"");
 function summaryFor(k){ const d=S.summaries[k]||{}, p=S.summaries[shift(k,-1)];
   return {start: d.start || (p && p.end) || null, startCarried: !d.start && !!(p && p.end), end: d.end||null, closed: !!d.closed}; }
 function summaryState(k){ const s=summaryFor(k); if (!acctFull(s.start) || !acctFull(s.end)) return null;
-  const inc=sum(incOf(k)), exp=sum(confirmed().filter(e=>cyc(e)===k)), expected=acctTot(s.start)+inc-exp;
-  return {inc, exp, expected, actual:acctTot(s.end), diff:Math.round((acctTot(s.end)-expected)*100)/100}; }
+  const inc=sum(incOf(k)), wd=sum(wdOf(k)), exp=sum(confirmed().filter(e=>cyc(e)===k)), expected=acctTot(s.start)+inc+wd-exp;
+  return {inc, wd, exp, expected, actual:acctTot(s.end), diff:Math.round((acctTot(s.end)-expected)*100)/100}; }
 
 function incSubTabs(){
   return h("div",{class:"subtabs",role:"tablist"}, ...SUBS_INC.map(([id,label]) =>
     h("button",{type:"button",role:"tab","aria-selected":String(S.isub===id),onclick:()=>{ S.isub=id; subscribeYear(); render(); window.scrollTo(0,0); }}, label)));
 }
 function incList(k){
-  const rows = incOf(k).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  const rows = allIncOf(k).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
   if (!rows.length) return [h("div",{class:"card"}, h("div",{class:"empty",text:"עוד אין הכנסות בחודש הזה."}))];
-  return [h("div",{class:"card"}, ...rows.map(x => h("button",{class:"row",type:"button",onclick:()=>openIncome(x)}, incBub(x.type),
-    h("span",{class:"t"}, h("b",{text:incTitle(x)}), h("small",{}, x.type==="other"?"מזדמנת · ":"", N(shortDate(x.date)))),
+  return [h("div",{class:"card"}, ...rows.map(x => h("button",{class:"row"+(isWd(x)?" wdrow":""),type:"button",onclick:()=>openIncome(x)}, incBub(x.type),
+    h("span",{class:"t"}, h("b",{text:incTitle(x)}), h("small",{}, isWd(x)?(x.type==="wd_loan"?"הלוואה · ":"משיכה מחיסכון · "):x.type==="other"?"מזדמנת · ":"", N(shortDate(x.date)))),
     h("span",{class:"amt"}, N(money(+x.amount||0))))))];
 }
-function incHero(k, label){ return h("section",{class:"card pad ihero"}, h("small",{text:label}), h("b",{}, N(money(sum(incOf(k)),0)))); }
+function incHero(k, label){ const w=sum(wdOf(k)); return h("section",{class:"card pad ihero"}, h("small",{text:label}), h("b",{}, N(money(sum(incOf(k)),0))), w ? h("small",{class:"wdnote"}, "ועוד ", N(money(w,0)), " משיכות שלא נספרו כהכנסה") : null); }
 function summaryRow(k){
   const st=summaryState(k), s=summaryFor(k);
   const tag = st ? (Math.abs(st.diff)<1 ? h("span",{class:"stag ok",text:"התאים ✓"}) : h("span",{class:"stag gap"}, "פער של ", N(money(Math.abs(st.diff),0))))
@@ -1092,7 +1099,7 @@ function summaryRow(k){
 }
 function viewIncMonth(){
   const k=curCycle(), ci=cycleInfo(k), prev=shift(k,-1), out=[];
-  const prevUsed = incOf(prev).length || S.expenses.some(e=>cyc(e)===prev) || S.summaries[prev];
+  const prevUsed = allIncOf(prev).length || S.expenses.some(e=>cyc(e)===prev) || S.summaries[prev];
   if (S.recLoaded && prevUsed && !summaryFor(prev).closed){
     const ch=h("span",{class:"chev"}); ch.append(ic("chevL"));
     out.push(h("button",{class:"waitcard",type:"button",onclick:()=>openSummary(prev)},
@@ -1109,12 +1116,12 @@ function viewIncPast(){
 }
 function viewIncAnalysis(){
   if (!S.icycle || S.icycle>curCycle()) S.icycle=curCycle();
-  const Y=labelYear(S.icycle), rows=S.incomes.filter(x=>labelYear(cyc(x))===Y), tot=sum(rows);
+  const Y=labelYear(S.icycle), yrAll=S.incomes.filter(x=>labelYear(cyc(x))===Y), rows=yrAll.filter(x=>!isWd(x)), wdY=sum(yrAll.filter(isWd)), tot=sum(rows);
   const mm=Array(12).fill(0); rows.forEach(x=>{ mm[shift(cyc(x),-1)%100-1]+=(+x.amount||0); });
   const used=mm.map((v,i)=>v?i:-1).filter(i=>i>=0), months=used.length;
   if (S.ibar==null || !mm[S.ibar]) S.ibar = used.length ? used[used.length-1] : null;
   const out=[cycleBar({k:S.icycle, set:v=>{S.icycle=Math.min(v,curCycle()); S.ibar=null;}, max:curCycle(), ym:true}),
-    h("section",{class:"card pad ihero"}, h("small",{text:`הכנסות ב-${Y}`}), h("b",{}, N(money(tot,0))), months ? h("small",{}, "ממוצע לחודש ", N(money(tot/months,0))) : null)];
+    h("section",{class:"card pad ihero"}, h("small",{text:`הכנסות ב-${Y}`}), h("b",{}, N(money(tot,0))), months ? h("small",{}, "ממוצע לחודש ", N(money(tot/months,0))) : null, wdY ? h("small",{class:"wdnote"}, "משיכות והלוואות (לא נספרו): ", N(money(wdY,0))) : null)];
   if (!rows.length){ out.push(h("div",{class:"card"}, h("div",{class:"empty",text:"אין הכנסות בשנה הזו."}))); return out; }
   const mx=Math.max(...mm);
   out.push(h("section",{class:"card pad ichart"}, h("small",{class:"h",text:"לפי חודשים"}),
@@ -1131,34 +1138,49 @@ function viewIncAnalysis(){
 let IF=null;
 function openIncome(x){
   IF = x ? {...x} : {type:"salary_menash", date:todayStr()};
+  let wd = isWd(IF); const lastInc = wd ? "salary_menash" : IF.type;
   const p=$("ipanel");
   const amt=h("input",{id:"iAmount",inputmode:"decimal",autocomplete:"off",placeholder:"0","aria-label":"סכום",value:x?String(x.amount):""});
   const name=h("input",{id:"iName",class:"field",autocomplete:"off",placeholder:"למשל: מכירת עגלה, מתנה",value:IF.name||""});
-  const nameRow=h("div",{hidden:IF.type!=="other"}, h("label",{class:"lbl2",for:"iName",text:"מה זה היה?"}), name);
+  const nameLbl=h("label",{class:"lbl2",for:"iName"});
+  const nameRow=h("div",{}, nameLbl, name);
+  const chipLbl=h("span",{class:"lbl2"}), eyebrow=h("span",{class:"eyebrow"}), saveBtn=h("button",{type:"button",class:"bigbtn",onclick:()=>save()});
   const chips=h("div",{class:"ichips"});
-  const drawChips=()=>chips.replaceChildren(...INC_TYPES.map(([id,l])=>h("button",{type:"button","aria-pressed":String(IF.type===id),onclick:()=>{IF.type=id; nameRow.hidden=id!=="other"; drawChips();}}, incBub(id), l)));
+  const kseg=h("div",{class:"kindseg",role:"group","aria-label":"סוג"});
+  const drawChips=()=>{
+    const list = wd ? WD_TYPES : INC_TYPES;
+    chips.replaceChildren(...list.map(([id,l])=>h("button",{type:"button","aria-pressed":String(IF.type===id),onclick:()=>{IF.type=id; drawChips();}}, incBub(id), l)));
+    nameRow.hidden = !wd && IF.type!=="other";
+    nameLbl.textContent = wd ? (IF.type==="wd_loan" ? "מאיפה ההלוואה? (לא חובה)" : "איזה חיסכון? (לא חובה)") : "מה זה היה?";
+    name.placeholder = wd ? (IF.type==="wd_loan" ? "למשל: בנק, הורים" : "למשל: חיסכון חופשה") : "למשל: מכירת עגלה, מתנה";
+    chipLbl.textContent = wd ? "מאיפה?" : "איזו הכנסה?";
+    eyebrow.textContent = x ? (wd?"עריכת משיכה":"עריכת הכנסה") : (wd?"משיכה חדשה":"הכנסה חדשה");
+    saveBtn.textContent = x ? "שמירת שינויים" : (wd?"הוספת משיכה":"הוספת הכנסה");
+    kseg.replaceChildren(...[["0","הכנסה"],["1","משיכה"]].map(([k,l])=>h("button",{type:"button","aria-pressed":String((k==="1")===wd),onclick:()=>{
+      const on=k==="1"; if (on===wd) return; wd=on; IF.type = wd ? "wd_saving" : lastInc; drawChips(); }}, l)));
+  };
   drawChips();
   const date=h("input",{type:"date",id:"iDate",class:"field",value:IF.date||""});
   const note=h("textarea",{id:"iNote",class:"field",placeholder:"למשל: כולל בונוס"}); note.value=IF.note||"";
   const err=h("p",{class:"err",role:"alert"});
-  const save=async()=>{
+  async function save(){
     const a=parseFloat((amt.value||"").replace(/[,₪\s]/g,""));
     if (!(a>0)){ err.textContent="כמה נכנס? הזינו סכום."; amt.focus(); return; }
     if (!date.value){ err.textContent="מתי זה נכנס? בחרו תאריך."; return; }
-    if (IF.type==="other" && !name.value.trim()){ err.textContent="כתבו בקצרה מה זו ההכנסה."; name.focus(); return; }
-    const body={amount:Math.round(a*100)/100, type:IF.type, name:IF.type==="other"?name.value.trim():"", date:date.value, cycle:cycleOf(date.value), note:note.value.trim(),
+    if (!wd && IF.type==="other" && !name.value.trim()){ err.textContent="כתבו בקצרה מה זו ההכנסה."; name.focus(); return; }
+    const body={amount:Math.round(a*100)/100, type:IF.type, name:(wd||IF.type==="other")?name.value.trim():"", date:date.value, cycle:cycleOf(date.value), note:note.value.trim(),
       createdAt:IF.createdAt||Date.now(), updatedAt:Date.now()};
-    try{ const ref = IF.id ? S.db.doc(`incomes/${IF.id}`) : S.db.collection("incomes").doc(); await ref.set(body); closeIncome(); toast(IF&&IF.id?"השינויים נשמרו":"ההכנסה נוספה"); }
+    try{ const ref = IF.id ? S.db.doc(`incomes/${IF.id}`) : S.db.collection("incomes").doc(); await ref.set(body); closeIncome(); toast(x?"השינויים נשמרו":(wd?"המשיכה נוספה":"ההכנסה נוספה")); }
     catch{ err.textContent="השמירה נכשלה. נסו שוב."; }
-  };
+  }
   const x0=h("button",{type:"button",class:"x","aria-label":"סגירה",onclick:closeIncome}); x0.innerHTML='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>';
-  const del = x ? h("button",{type:"button",class:"textbtn",style:"color:var(--danger)",onclick:async()=>{ try{ await S.db.doc(`incomes/${x.id}`).delete(); closeIncome(); toast("ההכנסה נמחקה"); }catch{ err.textContent="המחיקה נכשלה. נסו שוב."; } }},"מחיקת ההכנסה") : null;
-  p.replaceChildren(h("header",{}, h("span",{class:"eyebrow",text:x?"עריכת הכנסה":"הכנסה חדשה"}), x0),
+  const del = x ? h("button",{type:"button",class:"textbtn",style:"color:var(--danger)",onclick:async()=>{ try{ await S.db.doc(`incomes/${x.id}`).delete(); closeIncome(); toast("נמחק"); }catch{ err.textContent="המחיקה נכשלה. נסו שוב."; } }}, isWd(x)?"מחיקת המשיכה":"מחיקת ההכנסה") : null;
+  p.replaceChildren(h("header",{}, eyebrow, x0), kseg,
     h("label",{class:"amtbox",for:"iAmount"}, h("span",{text:"₪"}), amt),
-    h("div",{}, h("span",{class:"lbl2",text:"איזו הכנסה?"}), chips), nameRow,
+    h("div",{}, chipLbl, chips), nameRow,
     h("div",{}, h("label",{class:"lbl2",for:"iDate",text:"מתי?"}), date),
     h("div",{}, h("label",{class:"lbl2",for:"iNote",text:"הערה (לא חובה)"}), note),
-    h("div",{class:"savebar"}, err, h("button",{type:"button",class:"bigbtn",onclick:save}, x?"שמירת שינויים":"הוספת הכנסה"), del));
+    h("div",{class:"savebar"}, err, saveBtn, del));
   $("isheet").hidden=false; if (!x) setTimeout(()=>amt.focus(),60);
 }
 function closeIncome(){ $("isheet").hidden=true; IF=null; }
@@ -1177,10 +1199,10 @@ function renderSummary(){
     ...ACCTS.map(([a,l])=>h("div",{class:"sr"}, h("span",{text:l}), cell("start",a), cell("end",a))));
   const calc=h("div",{class:"scalc"});
   const drawCalc=()=>{
-    const inc=sum(incOf(k)), exp=sum(confirmed().filter(e=>cyc(e)===k)), full=acctFull(D.start)&&acctFull(D.end);
-    const st=acctTot(D.start), en=acctTot(D.end), expd=st+inc-exp, diff=Math.round((en-expd)*100)/100;
+    const inc=sum(incOf(k)), wd=sum(wdOf(k)), exp=sum(confirmed().filter(e=>cyc(e)===k)), full=acctFull(D.start)&&acctFull(D.end);
+    const st=acctTot(D.start), en=acctTot(D.end), expd=st+inc+wd-exp, diff=Math.round((en-expd)*100)/100;
     const line=(l,v,cls="")=>h("div",{class:cls}, h("span",{text:l}), h("b",{}, N(money(v,0))));
-    calc.replaceChildren(h("div",{class:"card pad"}, line("יתרה בתחילת החודש",st), line("+ הכנסות החודש",inc), line("− הוצאות החודש (כולל זיכויים)",exp), line("אמור להיות בסוף החודש",expd,"tot"), line("יש בפועל",en)),
+    calc.replaceChildren(h("div",{class:"card pad"}, line("יתרה בתחילת החודש",st), line("+ הכנסות החודש",inc), wd ? line("+ משיכות והלוואות",wd,"wdl") : null, line("− הוצאות החודש (כולל זיכויים)",exp), line("אמור להיות בסוף החודש",expd,"tot"), line("יש בפועל",en)),
       !full ? h("p",{class:"shint",text:"ממלאים את כל היתרות כדי לראות אם הכל מתאים."})
       : Math.abs(diff)<1 ? h("div",{class:"sok",text:"הכל מתאים ✓"})
       : h("div",{class:"sgap"}, diff<0 ? ["חסרים ", N(money(-diff,0)), " לעומת מה שאמור להיות. אולי הוצאה שלא נרשמה?"] : ["יש ", N(money(diff,0)), " יותר ממה שאמור להיות. אולי הכנסה שלא נרשמה, או הוצאה שנרשמה פעמיים?"]));
@@ -1197,6 +1219,7 @@ function renderSummary(){
     base.startCarried ? h("p",{class:"shint",text:"יתרות ההתחלה הגיעו מסוף החודש הקודם."}) : null,
     tbl, calc,
     h("p",{class:"shint",text:"היתרות בסוף החודש יהיו אוטומטית יתרות ההתחלה של החודש הבא."}),
+    wdOf(k).length ? h("p",{class:"shint",text:"משיכות והלוואות באמת נכנסו לחשבונות, ולכן הן נספרות בבדיקה. החזרי הלוואה נרשמים כהוצאה רגילה."}) : null,
     h("div",{class:"savebar"}, err, h("button",{type:"button",class:"bigbtn",onclick:()=>save(true)}, base.closed?"שמירה":"סגירת החודש"),
       base.closed ? null : h("button",{type:"button",class:"textbtn",onclick:()=>save(false)},"שמירה בלי לסגור")) ].filter(Boolean));
 }
