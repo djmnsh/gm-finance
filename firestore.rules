@@ -7,5 +7,16 @@ service cloud.firestore {
         && request.auth.token.email_verified == true
         && request.auth.token.email in ['menash1244@gmail.com', 'gal.ayalon2@gmail.com'];
     }
+
+    // Apple Pay: the iPhone Shortcut may only ADD a transaction to the inbox, and only with the family's secret key.
+    // It cannot read, change or delete anything. The real key is set in the Firebase console only, never in this repo.
+    match /inbox/{id} {
+      allow create: if request.resource.data.key == 'PUT-THE-SECRET-KEY-HERE'
+        && request.resource.data.keys().hasOnly(['key', 'amount', 'merchant', 'card', 'date'])
+        && request.resource.data.amount is string && request.resource.data.amount.size() <= 40
+        && (!('merchant' in request.resource.data) || (request.resource.data.merchant is string && request.resource.data.merchant.size() <= 200))
+        && (!('card' in request.resource.data) || (request.resource.data.card is string && request.resource.data.card.size() <= 100))
+        && (!('date' in request.resource.data) || (request.resource.data.date is string && request.resource.data.date.size() <= 40));
+    }
   }
 }

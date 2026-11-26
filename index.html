@@ -237,6 +237,9 @@ details.more .field{background:var(--bg);box-shadow:none}
 .pill-btn.light{background:var(--card);color:var(--ink)}
 .match{grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:600;font-size:.92rem;padding-top:8px;border-top:1px solid var(--line);margin-top:4px}
 .prow.wrap2{flex-wrap:wrap}
+.cmask{flex-direction:column;align-items:stretch;gap:8px}
+.cardmap{display:flex;flex-direction:column;gap:16px}
+.cmrow{display:flex;flex-direction:column;gap:8px}
 .scope{display:flex;flex-direction:column;gap:8px;background:var(--card);border-radius:18px;padding:12px;box-shadow:var(--shadow)}
 .scope b{text-align:center}
 .scope .btnrow button{flex:1}
@@ -479,7 +482,7 @@ const cyc = e => e.date ? cycleOf(e.date) : (+e.cycle||0);
 
 const S = { db:null, year:null, unsub:null, expenses:[], merchants:{}, merchDocExists:false, loaded:false,
   cycle: cycleOf(todayStr()), sumMode:"month", openCat:null, tab:"expenses", budgets:{}, editBudget:false, budDraft:null,
-  recurring:[], recLoaded:false, gen:null, genLoaded:false, rmode:null, sub:"overview", filter:"all", pastCycle:null, pay:[], q:"" };
+  recurring:[], recLoaded:false, gen:null, genLoaded:false, rmode:null, sub:"overview", filter:"all", pastCycle:null, pay:[], q:"", cardMap:{} };
 try{ const t=localStorage.getItem("gm-tab"); if(["expenses","income","savings"].includes(t)) S.tab=t;
   const u=localStorage.getItem("gm-sub"); if(["overview","month","past","analysis"].includes(u)) S.sub=u; }catch{}
 
@@ -579,11 +582,54 @@ async function startDb(){
   try{ await db.enablePersistence({synchronizeTabs:true}); }catch(e){ /* private mode or another tab: works online only */ }
   S.db=db;
   db.doc("meta/merchants").onSnapshot(s => { S.merchDocExists=s.exists; S.merchants=(s.exists && s.data().map)||{}; }, ()=>{});
+  db.doc("meta/cards").onSnapshot(s => { S.cardMap=(s.exists && s.data().map)||{}; render(); if (S.rmode==="cards") renderR(); }, ()=>{});
+  // Apple Pay: the iPhone Shortcut drops each Wallet transaction into inbox/; we turn it into a pending expense
+  db.collection("inbox").onSnapshot(s => { s.docs.forEach(d => takeInbox(d.id)); }, ()=>{});
   db.collection("budgets").onSnapshot(s => { S.budgets=Object.fromEntries(s.docs.map(d=>[Number(d.id), +d.data().amount||0])); if(!S.editBudget) render(); }, ()=>{});
   db.collection("recurring").onSnapshot({includeMetadataChanges:true}, s => { S.recurring=s.docs.map(d=>({...d.data(), id:d.id})).sort((a,b)=>(a.day||0)-(b.day||0)); if(!s.metadata.fromCache){ S.recLoaded=true; ensureGenerated(); } render(); }, ()=>{});
   db.doc(`gen/${cycleOf(todayStr())}`).onSnapshot({includeMetadataChanges:true}, s => { S.gen = s.exists ? s.data() : null; if(!s.metadata.fromCache){ S.genLoaded=true; ensureGenerated(); } render(); }, ()=>{});
   subscribeYear(Math.floor(S.cycle/100));
 }
+
+// ---------- Apple Pay inbox ----------
+// "₪1,234.50", "45,90 ₪", "ILS 12" -> number
+function parseAmount(t){
+  let x=String(t||"").replace(/[^\d.,-]/g,"");
+  if (x.includes(".") && x.includes(",")) x = x.lastIndexOf(",")>x.lastIndexOf(".") ? x.replace(/\./g,"").replace(",",".") : x.replace(/,/g,"");
+  else if (x.includes(",")) x = /,\d{1,2}$/.test(x) ? x.replace(",",".") : x.replace(/,/g,"");
+  const n=Math.abs(parseFloat(x)); return isFinite(n) ? Math.round(n*100)/100 : 0;
+}
+function inboxDate(t){ const m=String(t||"").match(/(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return `${m[1]}-${pad(+m[2])}-${pad(+m[3])}`;
+  const d=String(t||"").match(/(\d{1,2})[./](\d{1,2})[./](\d{2,4})/); if (d){ const y=d[3].length===2?2000+ +d[3]:+d[3]; return `${y}-${pad(+d[2])}-${pad(+d[1])}`; }
+  return todayStr(); }
+const inboxBusy=new Set();
+async function takeInbox(id){
+  if (inboxBusy.has(id)) return; inboxBusy.add(id);
+  try{
+    const iref=S.db.doc(`inbox/${id}`);
+    await S.db.runTransaction(async tx => {
+      const s=await tx.get(iref); if (!s.exists) return;
+      const d=s.data(), date=inboxDate(d.date), k=cycleOf(date), wc=String(d.card||"").trim(), merchant=String(d.merchant||"").trim();
+      tx.set(S.db.doc(`years/${Math.floor(k/100)}/expenses/ap-${id}`), {amount:parseAmount(d.amount), date, cycle:k, cat:"", sub:"", owner:"shared",
+        name:merchant, merchant, card:S.cardMap[wc]||"", walletCard:wc, note:"", status:"pending", source:"applepay", createdAt:Date.now(), updatedAt:Date.now()});
+      tx.delete(iref);
+    });
+  }catch(e){ /* the other phone may have taken it; try again on next load */ }
+  finally{ inboxBusy.delete(id); }
+}
+// Wallet card names (as the iPhone calls them) mapped to the app's payment-method chips, at meta/cards
+const walletCards = () => [...new Set([...Object.keys(S.cardMap), ...S.expenses.map(e=>(e.walletCard||"").trim()).filter(Boolean)])].sort();
+async function mapCard(wc, pay){
+  try{
+    await S.db.doc("meta/cards").set({map:{[wc]:pay}},{merge:true});
+    const b=S.db.batch(); let n=0;
+    S.expenses.filter(e=>e.status==="pending" && (e.walletCard||"").trim()===wc).forEach(e=>{ b.update(S.db.doc(`years/${e.year}/expenses/${e.id}`),{card:pay}); n++; });
+    if (n) await b.commit();
+    toast("נשמר");
+  }catch{ toast("השמירה נכשלה. נסו שוב."); }
+}
+const cardChips = wc => h("div",{class:"paychips"}, ...PAY.filter(o=>o.startsWith("אשראי")).map(o =>
+  h("button",{type:"button","aria-pressed":String(S.cardMap[wc]===o),onclick:()=>mapCard(wc,o)},o)));
 
 // ---------- Recurring expenses ----------
 // A template lives at recurring/<id>; each cycle gets one instance at years/<y>/expenses/r-<id>-<cycleKey>
@@ -638,7 +684,13 @@ function renderR(){
   if (!S.rmode) return;
   const x=h("button",{type:"button",class:"x","aria-label":"סגירה",onclick:closeR}); x.innerHTML='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>';
   const kids=[];
-  if (S.rmode==="manage"){
+  if (S.rmode==="cards"){
+    const list=walletCards();
+    kids.push(h("header",{}, h("span",{class:"eyebrow",text:"כרטיסי Apple Pay"}), x),
+      h("p",{style:"margin:0;color:var(--muted)",text:"לכל כרטיס בארנק של האייפון בוחרים פעם אחת את אמצעי התשלום שלו, ומאז הוא יתמלא לבד בעסקאות מ-Apple Pay."}));
+    if (!list.length) kids.push(h("div",{class:"card"}, h("div",{class:"empty"}, h("b",{text:"עוד לא הגיעו עסקאות מ-Apple Pay"}), h("span",{text:"אחרי התשלום הראשון, הכרטיס יופיע כאן."}))));
+    else kids.push(h("div",{class:"card pad cardmap"}, ...list.map(wc => h("div",{class:"cmrow"}, h("b",{text:wc}), cardChips(wc)))));
+  } else if (S.rmode==="manage"){
     kids.push(h("header",{}, h("span",{class:"eyebrow",text:"הוצאות קבועות"}), x),
       h("p",{style:"margin:0;color:var(--muted)",text:"בתחילת כל חודש האפליקציה יוצרת את ההוצאות האלה אוטומטית, והן נספרות מיד בתקציב."}));
     if (!S.recurring.length) kids.push(h("div",{class:"card"}, h("div",{class:"empty"}, h("b",{text:"עוד אין הוצאות קבועות"}), h("span",{text:"למשל: ארנונה, נטפליקס, חיסכון לילדים"}))));
@@ -800,6 +852,7 @@ function viewOverview(){
   }
   if (S.db) out.push(h("div",{class:"links"},
     h("button",{class:"linkrow",type:"button",onclick:()=>openR("manage")}, h("span",{text:"הוצאות קבועות"}), h("small",{}, N(String(S.recurring.filter(t=>t.active!==false).length)), " הוצאות")),
+    h("button",{class:"linkrow",type:"button",onclick:()=>openR("cards")}, h("span",{text:"כרטיסי Apple Pay"}), h("small",{}, N(String(walletCards().length)), " כרטיסים")),
     h("button",{class:"linkrow",type:"button",onclick:()=>startBudgetEdit(k)}, h("span",{text:"עריכת התקציב החודשי"}), bud ? h("small",{}, N(money(bud.amount,0))) : h("small",{text:"לא הוגדר"})),
     h("button",{class:"linkrow",type:"button",onclick:signOutNow}, h("span",{text:"יציאה מהחשבון"}), h("small",{text:(S.user&&S.user.email)||""}))), h("p",{class:"carried",style:"text-align:center;margin:0",text:"גרסה "+APP_VERSION}));
   return out;
@@ -809,6 +862,8 @@ function pendingSection(){
   const pend = pendingRows(); if (!pend.length) return null;
   return h("section",{class:"pending"},
     h("h2",{}, "ממתינות לאישור", h("span",{class:"badge num",text:pend.length})),
+    ...[...new Set(pend.map(e=>(e.walletCard||"").trim()).filter(wc=>wc && !S.cardMap[wc]))].map(wc =>
+      h("div",{class:"prow cmask"}, h("b",{}, "כרטיס חדש: ", h("span",{dir:"auto",text:wc}), ". איזה אמצעי תשלום זה?"), cardChips(wc))),
     ...pend.map(e => { const s=suggest(e.merchant)[0], mt=matchFor(e);
       return h("div",{class:"prow wrap2"}, bubble(mt?mt.cat:(s?s.cat:"")),
         h("div",{class:"t"}, h("b",{text:e.name||e.merchant||"עסקה מ-Apple Pay"}), h("small",{}, N(money(+e.amount||0)), s&&!mt?` · ${s.sub}?`:"")),
@@ -918,6 +973,7 @@ function openForm(e, fromPending){
   F.fromPending=!!fromPending; F.showAll=false; F.openMain=null; F.confirmDel=false;
   F.picked = e && e.cat ? key(e) : null;
   if (fromPending && !e.cat){ const s=suggest(e.merchant)[0]; if (s) F.picked=key(s); }
+  if (fromPending && !F.card && F.walletCard && S.cardMap[F.walletCard]) F.card=S.cardMap[F.walletCard];
   $("formTitle").textContent = fromPending ? "אישור עסקה" : (e ? "עריכת הוצאה" : "הוצאה חדשה");
   $("fSave").textContent = fromPending ? "אישור ושמירה" : (e ? "שמירת שינויים" : "הוספת הוצאה");
   $("fAmount").value = e && e.amount!=null ? String(e.amount) : "";
