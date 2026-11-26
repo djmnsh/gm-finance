@@ -237,6 +237,7 @@ details.more .field{background:var(--bg);box-shadow:none}
 .pill-btn.light{background:var(--card);color:var(--ink)}
 .match{grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:600;font-size:.92rem;padding-top:8px;border-top:1px solid var(--line);margin-top:4px}
 .prow.wrap2{flex-wrap:wrap}
+.prow.tap{cursor:pointer}
 .cmask{flex-direction:column;align-items:stretch;gap:8px}
 .cardmap{display:flex;flex-direction:column;gap:16px}
 .cmrow{display:flex;flex-direction:column;gap:8px}
@@ -522,7 +523,7 @@ const FB_CONFIG = {
   messagingSenderId: "280013651924",
   appId: "1:280013651924:web:e129d01de6111b1c8c6041"
 };
-const APP_VERSION = "2.2";
+const APP_VERSION = "2.3";
 const ALLOWED = ["menash1244@gmail.com", "gal.ayalon2@gmail.com"];
 function showLogin(msg){ $("login").hidden=false; const lg=$("loginLogo"), hb=document.querySelector("header.band img"); if (hb && !lg.src) lg.src=hb.src;
   if (msg!==undefined){ $("loginErr").textContent=msg; $("loginErr").hidden=!msg; } $("loginBtn").disabled=false; }
@@ -865,7 +866,7 @@ function pendingSection(){
     ...[...new Set(pend.map(e=>(e.walletCard||"").trim()).filter(wc=>wc && !S.cardMap[wc]))].map(wc =>
       h("div",{class:"prow cmask"}, h("b",{}, "כרטיס חדש: ", h("span",{dir:"auto",text:wc}), ". איזה אמצעי תשלום זה?"), cardChips(wc))),
     ...pend.map(e => { const s=suggest(e.merchant)[0], mt=matchFor(e);
-      return h("div",{class:"prow wrap2"}, bubble(mt?mt.cat:(s?s.cat:"")),
+      return h("div",{class:"prow wrap2 tap",onclick:ev=>{ if (!ev.target.closest("button")) openForm(e,true); }}, bubble(mt?mt.cat:(s?s.cat:"")),
         h("div",{class:"t"}, h("b",{text:e.name||e.merchant||"עסקה מ-Apple Pay"}), h("small",{}, N(money(+e.amount||0)), s&&!mt?` · ${s.sub}?`:"")),
         mt ? null : h("button",{class:"bigbtn",style:"width:auto;padding:10px 16px;font-size:.95rem;border-radius:14px",type:"button",onclick:()=>openForm(e,true)},"אישור"),
         mt ? h("div",{class:"match"}, `זו ההוצאה הקבועה "${mt.name||mt.recName||mt.merchant}"?`,
