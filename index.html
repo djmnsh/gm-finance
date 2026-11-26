@@ -305,6 +305,19 @@ details.more .field{background:var(--bg);box-shadow:none}
 .datebox[data-empty] input::-webkit-datetime-edit{color:transparent}
 .daterow .pill-btn{flex:none;position:relative;z-index:1;padding:0 20px;border:2px solid var(--ink);background:var(--bg);color:var(--ink);font-weight:800;border-radius:16px}
 .paychips{display:flex;flex-wrap:wrap;gap:8px}
+/* Payment method: one collapsed row, choices in a drawer */
+.payrow{display:flex;align-items:center;gap:12px;width:100%;border:0;background:var(--bg);border-radius:16px;padding:10px 14px;text-align:right}
+.payrow .bub,.popt .bub{width:36px;height:36px}.payrow .bub .ic,.popt .bub .ic{width:19px;height:19px}
+.payrow b{flex:1;font-weight:700}.payrow b.ph{color:var(--faint);font-weight:500}
+.payrow .chev{color:var(--faint);display:flex}.payrow .chev .ic{width:20px;height:20px}
+.psheet{z-index:25}
+#ppanel header .eyebrow{color:var(--ink);font-size:1.2rem;font-weight:800}
+.pgrp{font-size:.82rem;color:var(--muted);font-weight:700;margin:6px 4px -10px}
+.plist{background:var(--card);border-radius:20px;padding:2px 14px;display:flex;flex-direction:column}
+.popt{display:flex;align-items:center;gap:12px;border:0;background:transparent;padding:11px 0;text-align:right;width:100%}
+.popt+.popt{border-top:1px solid var(--line)}
+.popt span.t{flex:1;font-weight:500}.popt[aria-pressed="true"] span.t{font-weight:800}
+.popt .chk{width:24px;height:24px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:14px;font-weight:800}
 .frow{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:nowrap}
 .frow>.filters{flex-wrap:nowrap;gap:6px} .frow>.filters button{padding:7px 14px}
 .filters button.fbtn{padding:7px 11px;flex:none}
@@ -384,7 +397,7 @@ details.more .field{background:var(--bg);box-shadow:none}
     <div id="fDayRow" hidden><label class="lbl2" for="fDay">באיזה יום בחודש?</label><input id="fDay" class="field" inputmode="numeric" autocomplete="off" placeholder="למשל 1"></div>
     <details class="more" id="fExtra"><summary id="fExtraSum">בית עסק, אמצעי תשלום והערה</summary><div class="in">
       <div><label class="lbl2" for="fMerchant">בית עסק</label><input id="fMerchant" class="field" list="dlMerchants" autocomplete="off" placeholder="למשל: שופרסל"></div>
-      <div><span class="lbl2">אמצעי תשלום</span><input type="hidden" id="fCard"><div class="paychips" id="fPay"></div></div>
+      <div><span class="lbl2">אמצעי תשלום</span><input type="hidden" id="fCard"><button type="button" class="payrow" id="fPayBtn"></button></div>
       <div><label class="lbl2" for="fNote">הערה</label><textarea id="fNote" class="field" placeholder="למשל: תשלום 2 מתוך 6"></textarea></div>
     </div></details>
     <div class="savebar">
@@ -396,6 +409,7 @@ details.more .field{background:var(--bg);box-shadow:none}
   </form>
 </div>
 <div class="sheet" id="rsheet" hidden><div class="panel" id="rpanel"></div></div>
+<div class="sheet psheet" id="psheet" hidden><div class="panel" id="ppanel"></div></div>
 <div class="sheet" id="xsheet" hidden><div class="panel" id="xpanel"></div></div>
 <datalist id="dlMerchants"></datalist><datalist id="dlNames"></datalist><datalist id="dlCards"></datalist>
 <div class="toast" id="toast" hidden></div>
@@ -417,6 +431,10 @@ const CATS = [
   ["חסכונות",["חיסכון לילדים","השקעות","חיסכון חופשה"],"piggy","pink"],
 ];
 const ICONS = {
+  pcard:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/>',
+  pphone:'<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 17h2"/>',
+  pcash:'<rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="12" cy="12" r="2.5"/>',
+  pswap:'<path d="M4 9h13l-3-3M20 15H7l3 3"/>',
   cart:'<path d="M3 4h2l2.2 10.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
   drop:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/>',
   ticket:'<path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4z"/><path d="M14 7.5v1.5M14 11.2v1.6M14 15v1.5"/>',
@@ -558,7 +576,7 @@ const FB_CONFIG = {
   messagingSenderId: "280013651924",
   appId: "1:280013651924:web:e129d01de6111b1c8c6041"
 };
-const APP_VERSION = "3.3";
+const APP_VERSION = "3.4";
 const ALLOWED = ["menash1244@gmail.com", "gal.ayalon2@gmail.com"];
 function showLogin(msg){ S.splashReady=true; $("login").hidden=false; const lg=$("loginLogo"), hb=document.querySelector("header.band img"); if (hb && !lg.src) lg.src=hb.src;
   if (msg!==undefined){ $("loginErr").textContent=msg; $("loginErr").hidden=!msg; } $("loginBtn").disabled=false; }
@@ -1025,6 +1043,7 @@ function openForm(e, fromPending){
   $("fName").value = F.name || F.recName || (fromPending ? F.merchant||"" : "");
   $("fMerchant").value=F.merchant||""; setPay(F.card||""); $("fNote").value=F.note||"";
   $("fExtra").open = !!(F.merchant||F.card||F.note);
+  if (!e && !fromPending && !F.card) setPay(lastPay());
   $("fErr").textContent="";
   setOwner(F.owner||"shared");
   F.suggest = suggest($("fName").value || F.merchant);
@@ -1057,10 +1076,30 @@ function openTemplate(t){
   if (!t) setTimeout(()=>$("fAmount").focus(),60);
 }
 function closeForm(){ $("sheet").hidden=true; F=null; }
-const PAY = ["אשראי גל","אשראי מנש משותף","אשראי מנש אישי","מזומן","ביט","פייבוקס","העברה"];
-function setPay(v){ $("fCard").value=v;
-  const opts = v && !PAY.includes(v) ? [...PAY, v] : PAY;
-  $("fPay").replaceChildren(...opts.map(o=>h("button",{type:"button","aria-pressed":String(o===v),onclick:()=>setPay(o===$("fCard").value?"":o)},o))); }
+const PAY_GROUPS = [
+  ["אשראי", [["אשראי גל","pcard","pink"],["אשראי מנש משותף","pcard","blue"],["אשראי מנש אישי","pcard","lav"]]],
+  ["ביט", [["ביט גל","pphone","pink"],["ביט מנש","pphone","blue"]]],
+  ["אחר", [["מזומן","pcash","mint"],["פייבוקס","pphone","yellow"],["העברה","pswap","peach"]]] ];
+const PAY = PAY_GROUPS.flatMap(([,o])=>o.map(x=>x[0]));
+const PAYINFO = Object.fromEntries(PAY_GROUPS.flatMap(([,o])=>o.map(([n,i,c])=>[n,{icon:i,color:c}])));
+const payBub = v => { const i=PAYINFO[v]||{icon:"pcard",color:"blue"}; const b=h("span",{class:`bub c-${i.color}`}); b.append(ic(i.icon)); return b; };
+function lastPay(){ try{ const v=localStorage.getItem("gm-lastpay")||""; return PAY.includes(v)?v:""; }catch{ return ""; } }
+function setPay(v){ $("fCard").value=v||"";
+  const chev=h("span",{class:"chev"}); chev.append(ic("chevL"));
+  $("fPayBtn").replaceChildren(...(v ? [payBub(v), h("b",{text:v})] : [h("b",{class:"ph",text:"בחירת אמצעי תשלום"})]), chev); }
+function openPay(){
+  const cur=$("fCard").value, pick = v => { setPay(v); if (v) { try{ localStorage.setItem("gm-lastpay",v); }catch{} } $("psheet").hidden=true; };
+  const opt = v => { const b=h("button",{type:"button",class:"popt","aria-pressed":String(v===cur),onclick:()=>pick(v)}, payBub(v), h("span",{class:"t",text:v}));
+    if (v===cur) b.append(h("span",{class:"chk",text:"✓"})); return b; };
+  const x=h("button",{type:"button",class:"x","aria-label":"סגירה",onclick:()=>{$("psheet").hidden=true;}}); x.innerHTML='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+  const groups = PAY_GROUPS.map(([g,o]) => [g, o.map(z=>z[0])]);
+  if (cur && !PAY.includes(cur)) groups[2][1].push(cur);
+  $("ppanel").replaceChildren(h("header",{}, h("span",{class:"eyebrow",text:"אמצעי תשלום"}), x),
+    ...groups.flatMap(([g,o]) => [h("div",{class:"pgrp",text:g}), h("div",{class:"plist"}, ...o.map(opt))]),
+    ...(cur ? [h("button",{type:"button",class:"textbtn",onclick:()=>pick("")},"ללא אמצעי תשלום")] : []));
+  $("psheet").hidden=false; }
+$("fPayBtn").addEventListener("click", openPay);
+$("psheet").addEventListener("click", ev => { if (ev.target.id==="psheet") $("psheet").hidden=true; });
 function setDate(v){ $("fDate").value=v; if(v) $("fDateBox").removeAttribute("data-empty"); else $("fDateBox").setAttribute("data-empty",""); }
 $("fToday").addEventListener("click", ()=>setDate(todayStr()));
 $("fDate").addEventListener("input", ()=>setDate($("fDate").value));
