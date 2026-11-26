@@ -60,7 +60,7 @@ svg.ic{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;str
 .top{display:flex;align-items:center;justify-content:space-between;padding-top:18px;gap:12px}
 .band{background:var(--band);display:flex;justify-content:center;align-items:center;
   margin-left:calc(-1 * max(16px,env(safe-area-inset-left,0px)));margin-right:calc(-1 * max(16px,env(safe-area-inset-right,0px)));
-  margin-top:calc(-1 * env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);height:calc(116px + env(safe-area-inset-top,0px));margin-bottom:18px}
+  margin-top:0;padding-top:env(safe-area-inset-top,0px);height:calc(116px + env(safe-area-inset-top,0px));margin-bottom:18px}
 .band img{height:83px;width:auto;display:block}
 .syncrow{display:flex;justify-content:center;margin-top:-8px}
 .syncrow:has(.sync[hidden]){display:none}
@@ -498,7 +498,7 @@ function subscribeYear(){
   setSync("wait","טוען…");
   const parts={}, fresh={};
   const timer=setTimeout(()=>{ if(!S.loaded) setSync("off","אין חיבור"); },10000);
-  S.unsubs = ys.map(y => S.db.collection(`years/${y}/expenses`).onSnapshot(snap => {
+  S.unsubs = ys.map(y => S.db.collection(`years/${y}/expenses`).onSnapshot({includeMetadataChanges:true}, snap => {
     parts[y] = snap.docs.map(d => ({...d.data(), id:d.id, year:y}));
     S.expenses = ys.flatMap(x => parts[x]||[]);
     if (!snap.metadata.fromCache) fresh[y]=true;
@@ -578,8 +578,8 @@ async function startDb(){
   S.db=db;
   db.doc("meta/merchants").onSnapshot(s => { S.merchDocExists=s.exists; S.merchants=(s.exists && s.data().map)||{}; }, ()=>{});
   db.collection("budgets").onSnapshot(s => { S.budgets=Object.fromEntries(s.docs.map(d=>[Number(d.id), +d.data().amount||0])); if(!S.editBudget) render(); }, ()=>{});
-  db.collection("recurring").onSnapshot(s => { S.recurring=s.docs.map(d=>({...d.data(), id:d.id})).sort((a,b)=>(a.day||0)-(b.day||0)); if(!s.metadata.fromCache){ S.recLoaded=true; ensureGenerated(); } render(); }, ()=>{});
-  db.doc(`gen/${cycleOf(todayStr())}`).onSnapshot(s => { S.gen = s.exists ? s.data() : null; if(!s.metadata.fromCache){ S.genLoaded=true; ensureGenerated(); } render(); }, ()=>{});
+  db.collection("recurring").onSnapshot({includeMetadataChanges:true}, s => { S.recurring=s.docs.map(d=>({...d.data(), id:d.id})).sort((a,b)=>(a.day||0)-(b.day||0)); if(!s.metadata.fromCache){ S.recLoaded=true; ensureGenerated(); } render(); }, ()=>{});
+  db.doc(`gen/${cycleOf(todayStr())}`).onSnapshot({includeMetadataChanges:true}, s => { S.gen = s.exists ? s.data() : null; if(!s.metadata.fromCache){ S.genLoaded=true; ensureGenerated(); } render(); }, ()=>{});
   subscribeYear(Math.floor(S.cycle/100));
 }
 
