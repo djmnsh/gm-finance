@@ -106,6 +106,9 @@ svg.ic{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;str
 .addbtn.addlg .plusmark::before{width:22px;height:6px}
 .addbtn.addlg .plusmark::after{width:6px;height:22px}
 .addbtn.addlg:disabled{opacity:.6}
+.addbtn.addlg.incbtn{background:linear-gradient(#a98bf0,#6b47d1);border-color:#5636b0;text-shadow:0 3px 0 #5636b0;box-shadow:0 7px 0 #3f2585,0 12px 20px rgba(0,0,0,.25),inset 0 4px 0 rgba(255,255,255,.35)}
+.addbtn.addlg.incbtn:active{box-shadow:0 2px 0 #3f2585,0 5px 10px rgba(0,0,0,.2),inset 0 4px 0 rgba(255,255,255,.35)}
+.addbtn.addlg.incbtn .plusmark{box-shadow:0 3px 0 #5636b0} .addbtn.addlg.incbtn .plusmark::before,.addbtn.addlg.incbtn .plusmark::after{background:#6b47d1}
 .meter{height:12px;background:var(--sunk);border-radius:999px;overflow:hidden;margin-top:12px}
 .meter span{display:block;height:100%;border-radius:999px;background:var(--green)}
 .meter span.warn{background:var(--i-yellow)} .meter span.over{background:var(--soft-over)}
@@ -623,7 +626,7 @@ const FB_CONFIG = {
   messagingSenderId: "280013651924",
   appId: "1:280013651924:web:e129d01de6111b1c8c6041"
 };
-const APP_VERSION = "3.7";
+const APP_VERSION = "3.8";
 const ALLOWED = ["menash1244@gmail.com", "gal.ayalon2@gmail.com"];
 function showLogin(msg){ S.splashReady=true; $("login").hidden=false; const lg=$("loginLogo"), hb=document.querySelector("header.band img"); if (hb && !lg.src) lg.src=hb.src;
   if (msg!==undefined){ $("loginErr").textContent=msg; $("loginErr").hidden=!msg; } $("loginBtn").disabled=false; }
@@ -1106,7 +1109,7 @@ function viewIncMonth(){
       h("span",{}, h("b",{text:`סיכום ${monthName(prev)} מחכה לך`}), h("small",{text:"היתרות בסוף החודש ובדיקת ההתאמה"})), ch));
   }
   out.push(h("div",{class:"monthtitle"}, h("b",{text:ci.label}), h("small",{}, N(ci.range))), incHero(k,"הכנסות החודש"),
-    h("button",{class:"bigbtn addbtn addlg",type:"button",onclick:()=>openIncome(null),disabled:!S.db}, h("span",{class:"plusmark",text:"+"}), "הוספת הכנסה"),
+    h("button",{class:"bigbtn addbtn addlg incbtn",type:"button",onclick:()=>openIncome(null),disabled:!S.db}, h("span",{class:"plusmark",text:"+"}), "הוספת הכנסה"),
     ...incList(k), summaryRow(k));
   return out;
 }
